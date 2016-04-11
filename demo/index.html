@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css">
+	<script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+	<script type="text/javascript" src="bootstrap/js/bootstrap.js"></script>
+	<script type="text/javascript" src="../bower_components/fabric/dist/fabric.js"></script>
+	<script type="text/javascript" src="../annotations.js"></script>
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="row" style="margin:10px;">
+			<div class="btn-group" role="group" id="buttonControl">
+				<button type="button" class="btn btn-default" data-type="arrow">Arrow</button>
+				<button type="button" class="btn btn-default" data-type="square">Square</button>
+				<button type="button" class="btn btn-default" data-type="oval">Oval</button>
+				<button type="button" class="btn btn-default" data-type="pencil">Pencil</button>
+				<button type="button" class="btn btn-default" data-type="blur">Blur</button>
+				<button type="button" class="btn btn-default" data-type="text">Text</button>
+			</div>
+		</div>
+		<canvas id="myCanvas" width="800" height="450">Your browser does not support the HTML5 canvas tag.</canvas>
+	</div>
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+	window.annotation = new AnnotationLayer({
+	    element : "#myCanvas",
+	    image   : "background.png",
+	    scale   : 1.5 // This parameter should allow us to support high dpi monitors
+	});
+	$(document).delegate('#buttonControl>button', 'click', function(event) {
+		$(this).addClass('btn-primary').siblings().removeClass('btn-primary');
+		var type= $(this).data('type');
+		if(type == 'arrow'){
+			//
+		}
+		else if(type == 'square'){
+			annotation.activeControl = new SquareControl({
+				fillColor   : "transparent",
+				borderWidth : 2,
+				borderColor : "#ffffff",
+			});
+		}
+		else if(type == 'oval'){
+			//
+		}
+		else if(type == 'pencil'){
+			//
+		}
+		else if(type == 'blur'){
+			//
+		}
+		else if(type == 'text'){
+			//
+		}
+	});
+});
+</script> 
+</body>
+</html>
