@@ -27,13 +27,13 @@ jQuery(document).ready(function($) {
 	window.annotation = new AnnotationLayer({
 	    element : "#myCanvas",
 	    image   : "background.png",
-	    scale   : 1.5 // This parameter should allow us to support high dpi monitors
+	    scale   : 1.7 // This parameter should allow us to support high dpi monitors
 	});
 	$(document).delegate('#buttonControl>button', 'click', function(event) {
 		$(this).addClass('btn-primary').siblings().removeClass('btn-primary');
 		var type= $(this).data('type');
 		if(type == 'arrow'){
-			//
+			// Arrow Class
 		}
 		else if(type == 'square'){
 			annotation.activeControl = new SquareControl({
@@ -43,16 +43,28 @@ jQuery(document).ready(function($) {
 			});
 		}
 		else if(type == 'oval'){
-			//
+			annotation.activeControl = new OvalControl({
+				fillColor   : "transparent",
+				borderWidth : 2,
+				borderColor : "#ffffff",
+			});
 		}
 		else if(type == 'pencil'){
-			//
+			annotation.activeControl = new PencilControl({
+				fillColor   : "transparent",
+				borderWidth : 2,
+				borderColor : "#ffffff",
+			});
 		}
 		else if(type == 'blur'){
-			//
+			// Blur Class
 		}
 		else if(type == 'text'){
-			//
+			annotation.activeControl = new TextControl({
+				fillColor   : "#444",
+				fontSize 	: 48,
+				fontFamily 	: "Times New Roman",
+			});
 		}
 	});
 });
