@@ -33,37 +33,52 @@ jQuery(document).ready(function($) {
 		$(this).addClass('btn-primary').siblings().removeClass('btn-primary');
 		var type= $(this).data('type');
 		if(type == 'arrow'){
-			// Arrow Class
+			annotation.activeControl = new ArrowControl({
+				fillColor   : "transparent",
+				borderWidth : 2,
+				borderColor : "#ffffff",
+				layer 		: annotation
+			});
 		}
 		else if(type == 'square'){
 			annotation.activeControl = new SquareControl({
 				fillColor   : "transparent",
 				borderWidth : 2,
 				borderColor : "#ffffff",
+				layer 		: annotation
 			});
 		}
 		else if(type == 'oval'){
 			annotation.activeControl = new OvalControl({
 				fillColor   : "transparent",
-				borderWidth : 2,
+				borderWidth : 5,
 				borderColor : "#ffffff",
+				layer 		: annotation
 			});
 		}
 		else if(type == 'pencil'){
 			annotation.activeControl = new PencilControl({
-				fillColor   : "transparent",
-				borderWidth : 2,
-				borderColor : "#ffffff",
+				fillColor   : "#ffffff",
+				size 		: 8,
+				shadowColor : "#999",
+				shadowWidth : 3,
+				layer 		: annotation
 			});
 		}
 		else if(type == 'blur'){
-			// Blur Class
+			annotation.activeControl = new BlurControl({
+				fillColor   : "transparent",
+				borderWidth : 2,
+				borderColor : "#ffffff",
+				layer 		: annotation
+			});
 		}
 		else if(type == 'text'){
 			annotation.activeControl = new TextControl({
 				fillColor   : "#444",
 				fontSize 	: 48,
 				fontFamily 	: "Times New Roman",
+				layer 		: annotation
 			});
 		}
 	});

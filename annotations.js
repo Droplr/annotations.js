@@ -80,13 +80,15 @@ function createClass() {
 AnnotationLayer = createClass({
 	canvas: null,
 	activeControl : null,
+    selectedObject : null,
     initialize : function(options){
     	options || (options = {});
     	var _canvas = this.canvas;
 		if (options.element) {
 			var el = $(options.element);
 			this.canvas = _canvas = new fabric.Canvas(el[0],{selection:false});
-            this.canvas.perPixelTargetFind = true;
+            _canvas.perPixelTargetFind = true;
+            _canvas.uniScaleTransform = true;
 			this._onCanvasEvents();
 		}
 		if (options.image) {
@@ -111,24 +113,48 @@ AnnotationLayer = createClass({
     	if(this.canvas){
     		var that = this;
     		this.canvas.on('mouse:down', function(o){
-    			if(that.activeControl){
-    				that.activeControl._onMouseDown(that,o);
+    			if(that.selectedObject){
+                    that.selectedObject._onMouseDown(that,o);
     			}
+                else if(that.activeControl){
+                    that.activeControl._onMouseDown(that,o);
+                }
     		});
     		this.canvas.on('mouse:move', function(o){
-    			if(that.activeControl){
-    				that.activeControl._onMouseMove(that,o);
-    			}
+                if(that.selectedObject){
+                    that.selectedObject._onMouseMove(that,o);
+                }
+                else if(that.activeControl){
+                    that.activeControl._onMouseMove(that,o);
+                }
     		});
     		this.canvas.on('mouse:up', function(o){
-    			if(that.activeControl){
-    				that.activeControl._onMouseUp(that,o);
-    			}
+                if(that.selectedObject){
+                    that.selectedObject._onMouseUp(that,o);
+                }
+                else if(that.activeControl){
+                    that.activeControl._onMouseUp(that,o);
+                }
     		});
             this.canvas.on('object:scaling', function(o){
-                if(that.activeControl && that.activeControl._onScaling){
-                    that.activeControl._onScaling(that,o);
+                if(that.selectedObject){
+                    if(that.selectedObject._onScaling){
+                        that.selectedObject._onScaling(that,o);
+                    }
                 }
+                else if(that.activeControl){
+                    if(that.activeControl._onScaling){
+                        that.activeControl._onScaling(that,o);
+                    }
+                }
+            });
+            this.canvas.on('object:selected', function(o){
+                if(o.target.className){
+                    that.selectedObject = o.target.className.__proto__;
+                }
+            });
+            this.canvas.on('selection:cleared', function(o){
+                that.selectedObject = null;
             });
     	};
     },
@@ -157,10 +183,28 @@ AnnotationLayer = createClass({
             }
         }
         return this.canvas.toDataURL(option);
+    },
+    _startDrawing: function(options){
+        this.canvas.isDrawingMode = true;
+        if(options.fillColor){
+            this.canvas.freeDrawingBrush.color = options.fillColor;
+        }
+        if(options.size){
+            this.canvas.freeDrawingBrush.width = options.size || 5;
+        }
+        if(options.shadowWidth){
+            this.canvas.freeDrawingBrush.shadow = {blur : options.shadowWidth};
+        }
+        if(options.shadowColor){
+            this.canvas.freeDrawingBrush.shadow = {color : options.shadowColor};
+        }
+    },
+    _stopDrawing: function(){
+        this.canvas.isDrawingMode = false;
     }
 });
 
-ArrowControl = createClass(AnnotationLayer, {
+ArrowControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
@@ -174,8 +218,7 @@ ArrowControl = createClass(AnnotationLayer, {
             height      :0,
             strokeWidth :5,
             stroke      :'red',
-            fill        :'transparent',
-            uniScaleTransform: false
+            fill        :'transparent'
         });
         this._object.setControlVisible('mtr', false);
         this._object.setControlVisible('mt', false);
@@ -196,6 +239,9 @@ ArrowControl = createClass(AnnotationLayer, {
             this._object.set({
                 stroke   : options.borderColor
             });
+        }
+        if(options.layer && options.layer._stopDrawing){
+            options.layer._stopDrawing();
         }
     },
     set: function(p){
@@ -238,23 +284,23 @@ ArrowControl = createClass(AnnotationLayer, {
         that.canvas.renderAll();
     }
 });
-SquareControl = createClass(AnnotationLayer, {
+SquareControl = createClass({
 	_object:null,
 	_mouseDownPosition:null,
 	_isMouseDown:false,
     initialize : function(options){
-    	options || (options = {});
-    	this._object = new fabric.Rect({
-    		top 		:0,
-    		left 		:0,
-    		isNew 		:true,
-    		width 		:0,
-    		height 		:0,
-    		strokeWidth :5,
-    		stroke 		:'red',
-    		fill 		:'transparent',
-    		uniScaleTransform: false
-    	});
+        options || (options = {});
+        this._object = new fabric.Rect({
+            top         :0,
+            left        :0,
+            isNew       :true,
+            width       :0,
+            height      :0,
+            strokeWidth :5,
+            stroke      :'red',
+            fill        :'transparent',
+            className   : this
+        });
         this._object.setControlVisible('mtr', false);
         this._object.setControlVisible('mt', false);
         this._object.setControlVisible('ml', false);
@@ -274,6 +320,9 @@ SquareControl = createClass(AnnotationLayer, {
             this._object.set({
                 stroke   : options.borderColor
             });
+        }
+        if(options.layer && options.layer._stopDrawing){
+            options.layer._stopDrawing();
         }
     },
     set: function(p){
@@ -338,28 +387,28 @@ SquareControl = createClass(AnnotationLayer, {
         });
     }
 });
-OvalControl = createClass(AnnotationLayer, {
+OvalControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
     initialize : function(options){
         options || (options = {});
-        this._object = new fabric.Circle({
+        this._object = new fabric.Ellipse({
             top         :0,
             left        :0,
             isNew       :true,
             width       :0,
             height      :0,
-            radius      :0,
             strokeWidth :5,
             stroke      :'red',
-            fill        :'transparent'
+            fill        :'transparent',
+            className   : this
         });
         this._object.setControlVisible('mtr', false);
-        this._object.setControlVisible('mt', false);
-        this._object.setControlVisible('ml', false);
-        this._object.setControlVisible('mr', false);
-        this._object.setControlVisible('mb', false);
+        this._object.setControlVisible('tr', false);
+        this._object.setControlVisible('br', false);
+        this._object.setControlVisible('bl', false);
+        this._object.setControlVisible('tl', false);
         if(options.fillColor){
             this._object.set({
                 fill   : options.fillColor
@@ -374,6 +423,9 @@ OvalControl = createClass(AnnotationLayer, {
             this._object.set({
                 stroke   : options.borderColor
             });
+        }
+        if(options.layer && options.layer._stopDrawing){
+            options.layer._stopDrawing();
         }
     },
     set: function(p){
@@ -400,7 +452,8 @@ OvalControl = createClass(AnnotationLayer, {
         if(!this._isMouseDown)return;
         var pointer = that.canvas.getPointer(o.e);
         that.activeControl.set({
-            radius: Math.abs((this._mouseDownPosition.x - pointer.x))/2
+            rx: Math.abs(this._mouseDownPosition.x - pointer.x)/2,
+            ry: Math.abs(this._mouseDownPosition.y - pointer.y)/2
         });
         if(this._mouseDownPosition.x > pointer.x){
             that.activeControl.set({
@@ -423,15 +476,34 @@ OvalControl = createClass(AnnotationLayer, {
         that.activeControl._object.setCoords();
         that.canvas.setActiveObject(that.activeControl.getObject());
         that.canvas.renderAll();
+    },
+    _onScaling: function(that,o){
+        console.log(that, o)
+        if(!o)return;
+        var _width  = o.target.width;
+        var _height = o.target.height;
+        var _w      = _width  * o.target.scaleX;
+        var _h      = _height * o.target.scaleY;
+        o.target.set({
+            width   : _width,
+            height  : _height,
+            rx      : _w/2,
+            ry      : _h/2,
+            scaleX  : 1,
+            scaleY  : 1
+        });
     }
 });
-PencilControl = createClass(AnnotationLayer, {
+PencilControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
+    _option:null,
     initialize : function(options){
         options || (options = {});
-        console.log(this, this.constructor.superclass.prototype.getCanvas());
+        if(options.layer && options.layer._startDrawing){
+            options.layer._startDrawing(options);
+        }
     },
     set: function(p){
         this._object.set(p);
@@ -443,16 +515,26 @@ PencilControl = createClass(AnnotationLayer, {
         return this._object;
     },
     _onMouseDown: function(that,o){
-        
+        that.canvas.isDrawingMode = true;
     },
     _onMouseMove: function(that,o){
         
     },
     _onMouseUp: function(that,o){
-        
+        var size    = that.canvas.size();
+            obj     = that.canvas.item(size-1);
+        obj.setControlVisible('mtr', false);
+        obj.setControlVisible('mt', false);
+        obj.setControlVisible('ml', false);
+        obj.setControlVisible('mr', false);
+        obj.setControlVisible('mb', false);
+        obj.setControlVisible('bl', false);
+        obj.setControlVisible('br', false);
+        obj.setControlVisible('tl', false);
+        obj.setControlVisible('tr', false);
     }
 });
-BlurControl = createClass(AnnotationLayer,{
+BlurControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
@@ -487,6 +569,9 @@ BlurControl = createClass(AnnotationLayer,{
             this._object.set({
                 stroke   : options.borderColor
             });
+        }
+        if(options.layer && options.layer._stopDrawing){
+            options.layer._stopDrawing();
         }
     },
     set: function(p){
@@ -529,7 +614,7 @@ BlurControl = createClass(AnnotationLayer,{
         that.canvas.renderAll();
     }
 });
-TextControl = createClass(AnnotationLayer,{
+TextControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
@@ -564,6 +649,9 @@ TextControl = createClass(AnnotationLayer,{
             this._object.set({
                 fontFamily   : options.fontFamily
             });
+        }
+        if(options.layer && options.layer._stopDrawing){
+            options.layer._stopDrawing();
         }
     },
     set: function(p){
