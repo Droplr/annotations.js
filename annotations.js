@@ -1,3 +1,7 @@
+/**
+ * @function
+ * @ignore
+ */
 var slice = Array.prototype.slice,
 	emptyFunction = function() { },
 	IS_DONTENUM_BUGGY = (function() {
@@ -38,15 +42,25 @@ var slice = Array.prototype.slice,
 			}
 		}
 	};
-
+/**
+ * @function
+ * @ignore
+ */
 function Subclass(){}
-
+/**
+ * @function
+ * @ignore
+ */
 function callSuper(methodName) {
 	var fn = this.constructor.superclass.prototype[methodName];
 	return (arguments.length > 1)
 	? fn.apply(this, slice.call(arguments, 1))
 	: fn.call(this);
 }
+/**
+ * @function
+ * @ignore
+ */
 function createClass() {
 	var parent = null,
 	    properties = slice.call(arguments, 0);
@@ -77,8 +91,21 @@ function createClass() {
 	return klass;
 }
 
+
+
+/**
+ * Creates a new Annotation Layer.
+ * @class
+ */
 AnnotationLayer = createClass({
+    /**
+    * A variable in the AnnotationLayer, represent canvas of AnnotationLayer.
+    * @type {Object}
+    */
 	canvas: null,
+    /**
+    * A variable in the AnnotationLayer, represent canvas of AnnotationLayer.
+    */
 	activeControl : null,
     selectedObject : null,
     initialize : function(options){
@@ -169,8 +196,8 @@ AnnotationLayer = createClass({
     getCanvas: function(){
         return this.canvas;
     },
-    imageData: function(){
-        return this.canvas.toJSON(['original_left','original_top','original_scaleX','original_scaleY','currentHeight', 'currentWidth', 'lockMovementX', 'lockMovementY', 'lockRotation', 'lockScalingX', 'lockScalingY', 'lockUniScaling', 'id', 'class', 'name', 'hasControls', 'target', 'src', 'background_canvas','gradient_type','gradient_valu','ttext','tcolor','tcurve','tbottom','theight','toffset','clip_url','object','maskurl','originalsrc','crop_left','crop_top','crop_height','crop_width','original_src','thumb_src','finalcanvassrc','original_maskurl','gradient','original_svg_src','original_img_src','actual_src','current_src','reset_src','textDecoration','fontStyle','fontWeight','scaleX','scaleY','gradienttype','shadowcheck','strokecheck','index','scalevalue','gradientTypeValue']);
+    imageData: function(options){
+        return this.canvas.toJSON(options || []);
     },
     imageDataURL: function(type){
         var option={
@@ -208,41 +235,12 @@ ArrowControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
+    _firstTime:true,
+    _line:true,
+    _circle:true,
+    _arrow:true,
     initialize : function(options){
         options || (options = {});
-        this._object = new fabric.Rect({
-            top         :0,
-            left        :0,
-            isNew       :true,
-            width       :0,
-            height      :0,
-            strokeWidth :5,
-            stroke      :'red',
-            fill        :'transparent'
-        });
-        this._object.setControlVisible('mtr', false);
-        this._object.setControlVisible('mt', false);
-        this._object.setControlVisible('ml', false);
-        this._object.setControlVisible('mr', false);
-        this._object.setControlVisible('mb', false);
-        if(options.fillColor){
-            this._object.set({
-                fill   : options.fillColor
-            });
-        }
-        if(options.borderWidth){
-            this._object.set({
-                strokeWidth   : options.borderWidth
-            });
-        }
-        if(options.borderColor){
-            this._object.set({
-                stroke   : options.borderColor
-            });
-        }
-        if(options.layer && options.layer._stopDrawing){
-            options.layer._stopDrawing();
-        }
     },
     set: function(p){
         this._object.set(p);
@@ -253,35 +251,180 @@ ArrowControl = createClass({
     getObject: function(){
         return this._object;
     },
+    _calcArrowAngle: function(x1, y1, x2, y2) {
+        var angle = 0,x, y;
+
+        x = (x2 - x1);
+        y = (y2 - y1);
+
+        if (x === 0) {
+            angle = (y === 0) ? 0 : (y > 0) ? Math.PI / 2 : Math.PI * 3 / 2;
+        } else if (y === 0) {
+            angle = (x > 0) ? 0 : Math.PI;
+        } else {
+            angle = (x < 0) ? Math.atan(y / x) + Math.PI : (y < 0) ? Math.atan(y / x) + (2 * Math.PI) : Math.atan(y / x);
+        }
+
+        return (angle * 180 / Math.PI);
+    },
+    _moveEnd: function(obj) {
+        var p = obj,x1, y1, x2, y2;
+
+        if (obj.pointType === 'arrow_end') {
+            obj.line.set('x2', obj.get('left'));
+            obj.line.set('y2', obj.get('top'));
+        } else {
+            obj.line.set('x1', obj.get('left'));
+            obj.line.set('y1', obj.get('top'));
+        }
+        obj.line._setWidthHeight();
+
+        x1 = obj.line.get('x1');
+        y1 = obj.line.get('y1');
+        x2 = obj.line.get('x2');
+        y2 = obj.line.get('y2');
+        angle = this._calcArrowAngle(x1, y1, x2, y2);
+
+        if (obj.pointType === 'arrow_end') {
+            obj.arrow.set('angle', angle - 90);
+        } else {
+            obj.set('angle', angle - 90);
+        }
+        obj.line.setCoords();
+    },
+    _moveLine: function(obj){
+        var oldCenterX = (obj.x1 + obj.x2) / 2,
+            oldCenterY = (obj.y1 + obj.y2) / 2,
+            deltaX = obj.left - oldCenterX,
+            deltaY = obj.top - oldCenterY;
+
+        obj.arrow.set({
+            'left': obj.x1 + deltaX,
+            'top': obj.y1 + deltaY
+        }).setCoords();
+
+        obj.circle.set({
+            'left': obj.x2 + deltaX,
+            'top': obj.y2 + deltaY
+        }).setCoords();
+
+        obj.set({
+            'x1': obj.x1 + deltaX,
+            'y1': obj.y1 + deltaY,
+            'x2': obj.x2 + deltaX,
+            'y2': obj.y2 + deltaY
+        });
+
+        obj.set({
+            'left': (obj.x1 + obj.x2) / 2,
+            'top': (obj.y1 + obj.y2) / 2
+        });
+    },
     _onMouseDown: function(that,o){
-        if(!that.activeControl.get('isNew'))return;
+        if(!this._firstTime)return;
         this._isMouseDown=true;
         this._mouseDownPosition = that.canvas.getPointer(o.e);
-        that.activeControl.set({
-            left    : this._mouseDownPosition.x,
-            top     : this._mouseDownPosition.y
+        this._line = line = new fabric.Line([this._mouseDownPosition.x, this._mouseDownPosition.y, this._mouseDownPosition.x, this._mouseDownPosition.y], {
+            stroke: '#000',
+            selectable: true,
+            strokeWidth: '2',
+            padding: 5,
+            hasBorders: false,
+            hasControls: false,
+            originX: 'center',
+            originY: 'center',
+            lockScalingX: true,
+            lockScalingY: true
         });
-        that.canvas.add(that.activeControl.getObject());
-        that.canvas.renderAll();
+        var centerX = (line.x1 + line.x2) / 2,
+            centerY = (line.y1 + line.y2) / 2;
+        deltaX = line.left - centerX,
+        deltaY = line.top - centerY;
+
+        arrow = new fabric.Triangle({
+            left: line.get('x1') + deltaX,
+            top: line.get('y1') + deltaY,
+            originX: 'center',
+            originY: 'center',
+            hasBorders: false,
+            hasControls: false,
+            lockScalingX: true,
+            lockScalingY: true,
+            lockRotation: true,
+            pointType: 'arrow_start',
+            angle: -45,
+            width: 20,
+            height: 20,
+            fill: '#000'
+        });
+        arrow.line = this._line;
+
+        circle = new fabric.Circle({
+            left: line.get('x2') + deltaX,
+            top: line.get('y2') + deltaY,
+            radius: 3,
+            stroke: '#000',
+            strokeWidth: 3,
+            originX: 'center',
+            originY: 'center',
+            hasBorders: false,
+            hasControls: false,
+            lockScalingX: true,
+            lockScalingY: true,
+            lockRotation: true,
+            pointType: 'arrow_end',
+            fill: '#000'
+        });
+        circle.line = this._line;
+
+        this._line.customType = arrow.customType = circle.customType = 'arrow';
+        this._line.circle = arrow.circle = circle;
+        this._line.arrow = circle.arrow = arrow;
+
+        that.canvas.add(this._line, arrow, circle);
+        this._firstTime=false;
     },
     _onMouseMove: function(that,o){
         if(!this._isMouseDown)return;
         var pointer = that.canvas.getPointer(o.e);
-        that.activeControl.set({
-            width   : Math.abs(pointer.x - this._mouseDownPosition.x),
-            height  : Math.abs(pointer.y - this._mouseDownPosition.y)
-        });
+        this._line.set({
+            'x2'  : Math.abs(pointer.x),
+            'y2'  : Math.abs(pointer.y)
+        }).setCoords();
+
+        var oldCenterX = (this._line.x1 + this._line.x2) / 2,
+            oldCenterY = (this._line.y1 + this._line.y2) / 2,
+            deltaX = this._line.left - oldCenterX,
+            deltaY = this._line.top - oldCenterY,
+            angle = this._calcArrowAngle(this._line.x1, this._line.y1, this._line.x2, this._line.y2);
+
+        this._line.arrow.set({
+            'left': this._line.x1 + deltaX,
+            'top': this._line.y1 + deltaY,
+            'angle': angle - 90
+        }).setCoords();
+
+        this._line.circle.set({
+            'left': this._line.x2 + deltaX,
+            'top': this._line.y2 + deltaY
+        }).setCoords();
         that.canvas.renderAll();
     },
     _onMouseUp: function(that,o){
         if(!this._isMouseDown)return;
         this._isMouseDown=false;
-        that.activeControl.set({
-            isNew   : false
+        var _this = this;
+        this._line.arrow.on('moving', function () {
+            _this._moveEnd(_this._line.arrow);
+            that.canvas.renderAll();
         });
-        that.activeControl._object.setCoords();
-        that.canvas.setActiveObject(that.activeControl.getObject());
-        that.canvas.renderAll();
+        this._line.circle.on('moving', function () {
+            _this._moveEnd(_this._line.circle);
+            that.canvas.renderAll();
+        });
+        this._line.on('moving', function () {
+            _this._moveLine(_this._line);
+        });
     }
 });
 SquareControl = createClass({
@@ -623,6 +766,7 @@ TextControl = createClass({
         this._object = new fabric.IText('', {
             top         :0,
             left        :0,
+            padding     :1,
             isNew       :true,
             fill        :'#333'
         });
@@ -635,6 +779,9 @@ TextControl = createClass({
         this._object.setControlVisible('tr', false);
         this._object.setControlVisible('br', false);
         this._object.setControlVisible('bl', false);
+        if(options.layer && options.layer._stopDrawing){
+            options.layer._stopDrawing();
+        }
         if(options.fillColor){
             this._object.set({
                 fill   : options.fillColor
@@ -650,8 +797,19 @@ TextControl = createClass({
                 fontFamily   : options.fontFamily
             });
         }
-        if(options.layer && options.layer._stopDrawing){
-            options.layer._stopDrawing();
+        if(options.shadowWidth || options.shadowColor){
+            this._object.setShadow({
+                color   : options.shadowColor   || '#999',
+                blur    : options.shadowWidth   || 0,
+                offsetX   : 0,
+                offsetY   : 0
+            });
+        }
+        if(options.borderWidth || options.borderColor){
+            this._object.set({
+                stroke   : options.borderColor,
+                strokeWidth   : options.borderWidth
+            });
         }
     },
     set: function(p){
@@ -679,6 +837,7 @@ TextControl = createClass({
         that.canvas.add(that.activeControl.getObject());
         that.canvas.setActiveObject(that.activeControl.getObject());
         that.activeControl._object.enterEditing();
+        console.log(that.activeControl._object)
         that.canvas.renderAll();
     }
 });

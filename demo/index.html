@@ -75,9 +75,13 @@ jQuery(document).ready(function($) {
 		}
 		else if(type == 'text'){
 			annotation.activeControl = new TextControl({
-				fillColor   : "#444",
+				fillColor   : "#000",
 				fontSize 	: 48,
 				fontFamily 	: "Times New Roman",
+				shadowColor : "#e53737",
+				shadowWidth : 25,
+				borderWidth : 1,
+				borderColor : "#ffffff",
 				layer 		: annotation
 			});
 		}
