@@ -27,7 +27,7 @@ jQuery(document).ready(function($) {
 	window.annotation = new AnnotationLayer({
 	    element : "#myCanvas",
 	    image   : "background.png",
-	    scale   : 1.7 // This parameter should allow us to support high dpi monitors
+	    scale   : 1.5 // This parameter should allow us to support high dpi monitors
 	});
 	$(document).delegate('#buttonControl>button', 'click', function(event) {
 		$(this).addClass('btn-primary').siblings().removeClass('btn-primary');

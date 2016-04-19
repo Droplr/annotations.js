@@ -108,8 +108,10 @@ AnnotationLayer = createClass({
     */
 	activeControl : null,
     selectedObject : null,
+    options : null,
     initialize : function(options){
     	options || (options = {});
+        this.options = options;
     	var _canvas = this.canvas;
 		if (options.element) {
 			var el = $(options.element);
@@ -119,6 +121,7 @@ AnnotationLayer = createClass({
 			this._onCanvasEvents();
 		}
 		if (options.image) {
+            this.canvasImage = options.image;
 			_canvas.setBackgroundImage(options.image,
 				function(){
 					if(options.scale){
@@ -172,6 +175,18 @@ AnnotationLayer = createClass({
                 else if(that.activeControl){
                     if(that.activeControl._onScaling){
                         that.activeControl._onScaling(that,o);
+                    }
+                }
+            });
+            this.canvas.on('object:moving', function(o){
+                if(that.selectedObject){
+                    if(that.selectedObject._onMoving){
+                        that.selectedObject._onMoving(that,o);
+                    }
+                }
+                else if(that.activeControl){
+                    if(that.activeControl._onMoving){
+                        that.activeControl._onMoving(that,o);
                     }
                 }
             });
@@ -271,11 +286,11 @@ ArrowControl = createClass({
         var p = obj,x1, y1, x2, y2;
 
         if (obj.pointType === 'arrow_end') {
-            obj.line.set('x2', obj.get('left'));
-            obj.line.set('y2', obj.get('top'));
-        } else {
             obj.line.set('x1', obj.get('left'));
             obj.line.set('y1', obj.get('top'));
+        } else {
+            obj.line.set('x2', obj.get('left'));
+            obj.line.set('y2', obj.get('top'));
         }
         obj.line._setWidthHeight();
 
@@ -286,9 +301,9 @@ ArrowControl = createClass({
         angle = this._calcArrowAngle(x1, y1, x2, y2);
 
         if (obj.pointType === 'arrow_end') {
-            obj.arrow.set('angle', angle - 90);
+            obj.arrow.set('angle', angle + 90);
         } else {
-            obj.set('angle', angle - 90);
+            obj.set('angle', angle + 90);
         }
         obj.line.setCoords();
     },
@@ -342,8 +357,8 @@ ArrowControl = createClass({
         deltaY = line.top - centerY;
 
         arrow = new fabric.Triangle({
-            left: line.get('x1') + deltaX,
-            top: line.get('y1') + deltaY,
+            left: line.get('x2') + deltaX,
+            top: line.get('y2') + deltaY,
             originX: 'center',
             originY: 'center',
             hasBorders: false,
@@ -360,8 +375,8 @@ ArrowControl = createClass({
         arrow.line = this._line;
 
         circle = new fabric.Circle({
-            left: line.get('x2') + deltaX,
-            top: line.get('y2') + deltaY,
+            left: line.get('x1') + deltaX,
+            top: line.get('y1') + deltaY,
             radius: 3,
             stroke: '#000',
             strokeWidth: 3,
@@ -396,17 +411,17 @@ ArrowControl = createClass({
             oldCenterY = (this._line.y1 + this._line.y2) / 2,
             deltaX = this._line.left - oldCenterX,
             deltaY = this._line.top - oldCenterY,
-            angle = this._calcArrowAngle(this._line.x1, this._line.y1, this._line.x2, this._line.y2);
+            angle = this._calcArrowAngle(this._line.x2, this._line.y2, this._line.x1, this._line.y1);
 
         this._line.arrow.set({
-            'left': this._line.x1 + deltaX,
-            'top': this._line.y1 + deltaY,
+            'left': this._line.x2 + deltaX,
+            'top': this._line.y2 + deltaY,
             'angle': angle - 90
         }).setCoords();
 
         this._line.circle.set({
-            'left': this._line.x2 + deltaX,
-            'top': this._line.y2 + deltaY
+            'left': this._line.x1 + deltaX,
+            'top': this._line.y1 + deltaY
         }).setCoords();
         that.canvas.renderAll();
     },
@@ -681,6 +696,7 @@ BlurControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
+    _tempCanvas:null,
     initialize : function(options){
         options || (options = {});
         this._object = new fabric.Rect({
@@ -698,6 +714,9 @@ BlurControl = createClass({
         this._object.setControlVisible('ml', false);
         this._object.setControlVisible('mr', false);
         this._object.setControlVisible('mb', false);
+        if(options.layer && options.layer._stopDrawing){
+            options.layer._stopDrawing();
+        }
         if(options.fillColor){
             this._object.set({
                 fill   : options.fillColor
@@ -712,9 +731,6 @@ BlurControl = createClass({
             this._object.set({
                 stroke   : options.borderColor
             });
-        }
-        if(options.layer && options.layer._stopDrawing){
-            options.layer._stopDrawing();
         }
     },
     set: function(p){
@@ -749,12 +765,108 @@ BlurControl = createClass({
     _onMouseUp: function(that,o){
         if(!this._isMouseDown)return;
         this._isMouseDown=false;
+        var _mouse = that.canvas.getPointer(o.e),
+            _this = this;
         that.activeControl.set({
             isNew   : false
         });
         that.activeControl._object.setCoords();
         that.canvas.setActiveObject(that.activeControl.getObject());
+
+        this._tempCanvas = document.createElement('canvas');
+        this._tempCanvas = new fabric.Canvas(this._tempCanvas);
+        this._tempCanvas.setBackgroundImage(that.options.image,
+            function(){
+                if(that.options.scale){
+                    _this._tempCanvas.setBackgroundImage(_this._tempCanvas.backgroundImage, function(){
+                        _this._tempCanvas.renderAll();
+                        var _w = _this._tempCanvas.backgroundImage.width * _this._tempCanvas.backgroundImage.scaleX;
+                        var _h = _this._tempCanvas.backgroundImage.height * _this._tempCanvas.backgroundImage.scaleY;
+                        _this._tempCanvas.setWidth(_w).setHeight(_h);
+                        var base64 = _this._tempCanvas.toDataURL({
+                            format  : 'jpeg',
+                            left    : _this._mouseDownPosition.x,
+                            top     : _this._mouseDownPosition.y,
+                            width   : that.activeControl._object.width,
+                            height  : that.activeControl._object.height,
+                        });
+                        fabric.Image.fromURL(base64, function(img) {
+                            that.canvas.remove(that.activeControl._object);
+                            _this._object = img.set({left: _this._mouseDownPosition.x, top: _this._mouseDownPosition.y});
+
+                            _this._object.setControlVisible('mtr', false);
+                            _this._object.setControlVisible('mt', false);
+                            _this._object.setControlVisible('ml', false);
+                            _this._object.setControlVisible('mr', false);
+                            _this._object.setControlVisible('mb', false);
+                            _this._object.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(4 * that.options.scale)}));
+                            _this._object.applyFilters(that.canvas.renderAll.bind(that.canvas));
+                            that.canvas.add(_this._object).renderAll();
+                            that.canvas.setActiveObject(_this._object);
+                            _this._tempCanvas.remove();
+                        });
+                    }, {
+                        scaleX  : that.options.scale,
+                        scaleY  : that.options.scale
+                    });
+                }
+            }
+        );
         that.canvas.renderAll();
+    },
+    _onScaling: function(that,o){
+        if(!o)return;
+        var _mouse = that.canvas.getPointer(o.e),
+            _this = this;
+        var base64 = _this._tempCanvas.toDataURL({
+            format  : 'jpeg',
+            left    : o.target.left,
+            top     : o.target.top,
+            width   : o.target.width*o.target.scaleX,
+            height  : o.target.height*o.target.scaleY,
+        });
+        fabric.Image.fromURL(base64, function(img) {
+            that.canvas.remove(that.activeControl._object);
+            _this._object = img.set({left: o.target.left, top: o.target.top});
+
+            _this._object.setControlVisible('mtr', false);
+            _this._object.setControlVisible('mt', false);
+            _this._object.setControlVisible('ml', false);
+            _this._object.setControlVisible('mr', false);
+            _this._object.setControlVisible('mb', false);
+            _this._object.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(4 * that.options.scale)}));
+            _this._object.applyFilters(that.canvas.renderAll.bind(that.canvas));
+            that.canvas.add(_this._object).renderAll();
+            that.canvas.setActiveObject(_this._object);
+            that.canvas.renderAll();
+        });
+    },
+    _onMoving: function(that,o){
+        if(!o)return;
+        var _mouse = that.canvas.getPointer(o.e),
+            _this = this;
+        var base64 = _this._tempCanvas.toDataURL({
+            format  : 'jpeg',
+            left    : o.target.left,
+            top     : o.target.top,
+            width   : o.target.width*o.target.scaleX,
+            height  : o.target.height*o.target.scaleY,
+        });
+        fabric.Image.fromURL(base64, function(img) {
+            that.canvas.remove(that.activeControl._object);
+            _this._object = img.set({left: o.target.left, top: o.target.top});
+
+            _this._object.setControlVisible('mtr', false);
+            _this._object.setControlVisible('mt', false);
+            _this._object.setControlVisible('ml', false);
+            _this._object.setControlVisible('mr', false);
+            _this._object.setControlVisible('mb', false);
+            _this._object.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(4 * that.options.scale)}));
+            _this._object.applyFilters(that.canvas.renderAll.bind(that.canvas));
+            that.canvas.add(_this._object).renderAll();
+            that.canvas.setActiveObject(_this._object);
+            that.canvas.renderAll();
+        });
     }
 });
 TextControl = createClass({
