@@ -250,12 +250,70 @@ ArrowControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
-    _firstTime:true,
+    _firstOne:true,
     _line:true,
     _circle:true,
     _arrow:true,
     initialize : function(options){
         options || (options = {});
+        this._line = new fabric.Line([0,0,0,0], {
+            stroke: options.fillColor || '#000',
+            selectable: true,
+            strokeWidth: '2',
+            hasBorders: false,
+            hasControls: false,
+            originX: 'center',
+            originY: 'center',
+            lockScalingX: true,
+            lockScalingY: true,
+            inNew   : true,
+            className   : this
+        });
+        var centerX = (this._line.x1 + this._line.x2) / 2,
+            centerY = (this._line.y1 + this._line.y2) / 2;
+        deltaX = this._line.left - centerX,
+        deltaY = this._line.top - centerY;
+
+        this._arrow = new fabric.Triangle({
+            left: this._line.get('x2') + deltaX,
+            top: this._line.get('y2') + deltaY,
+            originX: 'center',
+            originY: 'center',
+            hasBorders: false,
+            hasControls: false,
+            lockScalingX: true,
+            lockScalingY: true,
+            lockRotation: true,
+            pointType: 'arrow_start',
+            angle: -45,
+            width: 20,
+            height: 20,
+            fill: options.fillColor || '#000',
+            className   : this
+        });
+        this._arrow.line = this._line;
+
+        this._circle = new fabric.Circle({
+            left: this._line.get('x1') + deltaX,
+            top: this._line.get('y1') + deltaY,
+            radius: 3,
+            stroke: options.fillColor || '#000',
+            strokeWidth: 3,
+            originX: 'center',
+            originY: 'center',
+            hasBorders: false,
+            hasControls: false,
+            lockScalingX: true,
+            lockScalingY: true,
+            lockRotation: true,
+            pointType: 'arrow_end',
+            fill: options.fillColor || '#000',
+            className   : this
+        });
+        this._circle.line = this._line;
+        this._line.customType = this._arrow.customType = this._circle.customType = 'arrow';
+        this._line.circle = this._arrow.circle = this._circle;
+        this._line.arrow = this._circle.arrow = this._arrow;
     },
     set: function(p){
         this._object.set(p);
@@ -314,13 +372,13 @@ ArrowControl = createClass({
             deltaY = obj.top - oldCenterY;
 
         obj.arrow.set({
-            'left': obj.x1 + deltaX,
-            'top': obj.y1 + deltaY
+            'left': obj.x2 + deltaX,
+            'top': obj.y2 + deltaY
         }).setCoords();
 
         obj.circle.set({
-            'left': obj.x2 + deltaX,
-            'top': obj.y2 + deltaY
+            'left': obj.x1 + deltaX,
+            'top': obj.y1 + deltaY
         }).setCoords();
 
         obj.set({
@@ -336,68 +394,33 @@ ArrowControl = createClass({
         });
     },
     _onMouseDown: function(that,o){
-        if(!this._firstTime)return;
+        if(!this._line.inNew)return;
         this._isMouseDown=true;
         this._mouseDownPosition = that.canvas.getPointer(o.e);
-        this._line = line = new fabric.Line([this._mouseDownPosition.x, this._mouseDownPosition.y, this._mouseDownPosition.x, this._mouseDownPosition.y], {
-            stroke: '#000',
-            selectable: true,
-            strokeWidth: '2',
-            padding: 5,
-            hasBorders: false,
-            hasControls: false,
-            originX: 'center',
-            originY: 'center',
-            lockScalingX: true,
-            lockScalingY: true
-        });
-        var centerX = (line.x1 + line.x2) / 2,
-            centerY = (line.y1 + line.y2) / 2;
-        deltaX = line.left - centerX,
-        deltaY = line.top - centerY;
+        this._line.set({
+            'x1'  : Math.abs(this._mouseDownPosition.x),
+            'y1'  : Math.abs(this._mouseDownPosition.y),
+            'x2'  : Math.abs(this._mouseDownPosition.x),
+            'y2'  : Math.abs(this._mouseDownPosition.y)
+        }).setCoords();
+        var oldCenterX = (this._line.x1 + this._line.x2) / 2,
+            oldCenterY = (this._line.y1 + this._line.y2) / 2,
+            deltaX = this._line.left - oldCenterX,
+            deltaY = this._line.top - oldCenterY,
+            angle = this._calcArrowAngle(this._line.x2, this._line.y2, this._line.x1, this._line.y1);
 
-        arrow = new fabric.Triangle({
-            left: line.get('x2') + deltaX,
-            top: line.get('y2') + deltaY,
-            originX: 'center',
-            originY: 'center',
-            hasBorders: false,
-            hasControls: false,
-            lockScalingX: true,
-            lockScalingY: true,
-            lockRotation: true,
-            pointType: 'arrow_start',
-            angle: -45,
-            width: 20,
-            height: 20,
-            fill: '#000'
-        });
-        arrow.line = this._line;
+        this._line.arrow.set({
+            'left': this._line.x2 + deltaX,
+            'top': this._line.y2 + deltaY,
+            'angle': angle - 90
+        }).setCoords();
 
-        circle = new fabric.Circle({
-            left: line.get('x1') + deltaX,
-            top: line.get('y1') + deltaY,
-            radius: 3,
-            stroke: '#000',
-            strokeWidth: 3,
-            originX: 'center',
-            originY: 'center',
-            hasBorders: false,
-            hasControls: false,
-            lockScalingX: true,
-            lockScalingY: true,
-            lockRotation: true,
-            pointType: 'arrow_end',
-            fill: '#000'
-        });
-        circle.line = this._line;
-
-        this._line.customType = arrow.customType = circle.customType = 'arrow';
-        this._line.circle = arrow.circle = circle;
-        this._line.arrow = circle.arrow = arrow;
-
-        that.canvas.add(this._line, arrow, circle);
-        this._firstTime=false;
+        this._line.circle.set({
+            'left': this._line.x1 + deltaX,
+            'top': this._line.y1 + deltaY
+        }).setCoords();
+        that.canvas.add(this._line, this._arrow, this._circle);
+        this._line.inNew=false;
     },
     _onMouseMove: function(that,o){
         if(!this._isMouseDown)return;
@@ -427,7 +450,7 @@ ArrowControl = createClass({
     },
     _onMouseUp: function(that,o){
         if(!this._isMouseDown)return;
-        this._isMouseDown=false;
+        this._firstOne=this._isMouseDown=false;
         var _this = this;
         this._line.arrow.on('moving', function () {
             _this._moveEnd(_this._line.arrow);
@@ -440,6 +463,7 @@ ArrowControl = createClass({
         this._line.on('moving', function () {
             _this._moveLine(_this._line);
         });
+        console.log(this._firstOne);
     }
 });
 SquareControl = createClass({
@@ -481,6 +505,7 @@ SquareControl = createClass({
         }
         if(options.layer && options.layer._stopDrawing){
             options.layer._stopDrawing();
+            options.layer.canvas.discardActiveObject();
         }
     },
     set: function(p){
@@ -773,8 +798,7 @@ BlurControl = createClass({
         that.activeControl._object.setCoords();
         that.canvas.setActiveObject(that.activeControl.getObject());
 
-        this._tempCanvas = document.createElement('canvas');
-        this._tempCanvas = new fabric.Canvas(this._tempCanvas);
+        this._tempCanvas = new fabric.Canvas(document.createElement('canvas'));
         this._tempCanvas.setBackgroundImage(that.options.image,
             function(){
                 if(that.options.scale){
@@ -792,7 +816,7 @@ BlurControl = createClass({
                         });
                         fabric.Image.fromURL(base64, function(img) {
                             that.canvas.remove(that.activeControl._object);
-                            _this._object = img.set({left: _this._mouseDownPosition.x, top: _this._mouseDownPosition.y});
+                            _this._object = img.set({left: _this._mouseDownPosition.x, top: _this._mouseDownPosition.y,className   : _this});
 
                             _this._object.setControlVisible('mtr', false);
                             _this._object.setControlVisible('mt', false);
@@ -802,7 +826,7 @@ BlurControl = createClass({
                             _this._object.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(4 * that.options.scale)}));
                             _this._object.applyFilters(that.canvas.renderAll.bind(that.canvas));
                             that.canvas.add(_this._object).renderAll();
-                            that.canvas.setActiveObject(_this._object);
+                            that.canvas.setActiveObject(_this._object).sendToBack(_this._object);
                             _this._tempCanvas.remove();
                         });
                     }, {
@@ -827,7 +851,7 @@ BlurControl = createClass({
         });
         fabric.Image.fromURL(base64, function(img) {
             that.canvas.remove(that.activeControl._object);
-            _this._object = img.set({left: o.target.left, top: o.target.top});
+            _this._object = img.set({left: o.target.left, top: o.target.top,className   : _this});
 
             _this._object.setControlVisible('mtr', false);
             _this._object.setControlVisible('mt', false);
@@ -845,7 +869,8 @@ BlurControl = createClass({
         if(!o)return;
         var _mouse = that.canvas.getPointer(o.e),
             _this = this;
-        var base64 = _this._tempCanvas.toDataURL({
+        console.log(that.activeControl);
+        var base64 = that.activeControl._tempCanvas.toDataURL({
             format  : 'jpeg',
             left    : o.target.left,
             top     : o.target.top,
@@ -854,7 +879,7 @@ BlurControl = createClass({
         });
         fabric.Image.fromURL(base64, function(img) {
             that.canvas.remove(that.activeControl._object);
-            _this._object = img.set({left: o.target.left, top: o.target.top});
+            _this._object = img.set({left: o.target.left, top: o.target.top,className   : _this});
 
             _this._object.setControlVisible('mtr', false);
             _this._object.setControlVisible('mt', false);

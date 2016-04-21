@@ -27,16 +27,14 @@ jQuery(document).ready(function($) {
 	window.annotation = new AnnotationLayer({
 	    element : "#myCanvas",
 	    image   : "background.png",
-	    scale   : 1.5 // This parameter should allow us to support high dpi monitors
+	    scale   : 1.2 // This parameter should allow us to support high dpi monitors
 	});
 	$(document).delegate('#buttonControl>button', 'click', function(event) {
 		$(this).addClass('btn-primary').siblings().removeClass('btn-primary');
 		var type= $(this).data('type');
 		if(type == 'arrow'){
 			annotation.activeControl = new ArrowControl({
-				fillColor   : "transparent",
-				borderWidth : 2,
-				borderColor : "#ffffff",
+				fillColor   : "#e53737",
 				layer 		: annotation
 			});
 		}
