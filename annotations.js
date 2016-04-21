@@ -108,11 +108,13 @@ AnnotationLayer = createClass({
     */
 	activeControl : null,
     selectedObject : null,
+    tempCanvas : new fabric.Canvas(document.createElement('canvas')),
     options : null,
     initialize : function(options){
     	options || (options = {});
         this.options = options;
     	var _canvas = this.canvas;
+        var _this = this;
 		if (options.element) {
 			var el = $(options.element);
 			this.canvas = _canvas = new fabric.Canvas(el[0],{selection:false});
@@ -130,6 +132,26 @@ AnnotationLayer = createClass({
                             var _w = _canvas.backgroundImage.width * _canvas.backgroundImage.scaleX;
                             var _h = _canvas.backgroundImage.height * _canvas.backgroundImage.scaleY;
                             _canvas.setWidth(_w).setHeight(_h);
+                            _this.tempCanvas.setWidth(_w).setHeight(_h);
+
+                            var ImageObj1 = new Image();
+                            ImageObj1.onload = function() {
+                                image1 = new fabric.Image(ImageObj1);
+                                image1.src = options.image;
+                                image1.set({
+                                    top:0,
+                                    left:0,
+                                    width:_w,
+                                    height:_h
+                                });
+                                image1.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(3.5 * options.scale)}));
+                                image1.applyFilters(function(){
+                                    _this.tempCanvas.setBackgroundImage(image1);
+                                    _this.tempCanvas.renderAll();
+
+                                });
+                            };
+                            ImageObj1.src = options.image;
                         }, {
 							scaleX 	: options.scale,
 							scaleY 	: options.scale
@@ -798,100 +820,58 @@ BlurControl = createClass({
         that.activeControl._object.setCoords();
         that.canvas.setActiveObject(that.activeControl.getObject());
 
-        this._tempCanvas = new fabric.Canvas(document.createElement('canvas'));
-        this._tempCanvas.setBackgroundImage(that.options.image,
-            function(){
-                if(that.options.scale){
-                    _this._tempCanvas.setBackgroundImage(_this._tempCanvas.backgroundImage, function(){
-                        _this._tempCanvas.renderAll();
-                        var _w = _this._tempCanvas.backgroundImage.width * _this._tempCanvas.backgroundImage.scaleX;
-                        var _h = _this._tempCanvas.backgroundImage.height * _this._tempCanvas.backgroundImage.scaleY;
-                        _this._tempCanvas.setWidth(_w).setHeight(_h);
-                        var base64 = _this._tempCanvas.toDataURL({
-                            format  : 'jpeg',
-                            left    : _this._mouseDownPosition.x,
-                            top     : _this._mouseDownPosition.y,
-                            width   : that.activeControl._object.width,
-                            height  : that.activeControl._object.height,
-                        });
-                        fabric.Image.fromURL(base64, function(img) {
-                            that.canvas.remove(that.activeControl._object);
-                            _this._object = img.set({left: _this._mouseDownPosition.x, top: _this._mouseDownPosition.y,className   : _this});
-
-                            _this._object.setControlVisible('mtr', false);
-                            _this._object.setControlVisible('mt', false);
-                            _this._object.setControlVisible('ml', false);
-                            _this._object.setControlVisible('mr', false);
-                            _this._object.setControlVisible('mb', false);
-                            _this._object.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(4 * that.options.scale)}));
-                            _this._object.applyFilters(that.canvas.renderAll.bind(that.canvas));
-                            that.canvas.add(_this._object).renderAll();
-                            that.canvas.setActiveObject(_this._object).sendToBack(_this._object);
-                            _this._tempCanvas.remove();
-                        });
-                    }, {
-                        scaleX  : that.options.scale,
-                        scaleY  : that.options.scale
-                    });
-                }
+        var base64 = that.tempCanvas.toDataURL({
+            format  : 'jpeg',
+            left    : _this._mouseDownPosition.x,
+            top     : _this._mouseDownPosition.y,
+            width   : that.activeControl._object.getWidth(),
+            height  : that.activeControl._object.getHeight(),
+        });
+        that.canvas.remove(that.activeControl._object);
+        var ImageObj = new Image();
+        ImageObj.loaded = true;
+        ImageObj.onload = function() {
+            if(ImageObj.loaded){
+                img = new fabric.Image(ImageObj);
+                img.original_object = ImageObj;
+                ImageObj.loaded = false;
+                _this._object = img.set({left: _this._mouseDownPosition.x, top: _this._mouseDownPosition.y,className   : _this});
+                _this._object.setControlVisible('mtr', false);
+                _this._object.setControlVisible('mt', false);
+                _this._object.setControlVisible('ml', false);
+                _this._object.setControlVisible('mr', false);
+                _this._object.setControlVisible('mb', false);
+                that.canvas.add(_this._object).renderAll();
+                that.canvas.setActiveObject(_this._object).sendToBack(_this._object).renderAll();
             }
-        );
-        that.canvas.renderAll();
+        }
+        ImageObj.src = base64;
     },
     _onScaling: function(that,o){
         if(!o)return;
         var _mouse = that.canvas.getPointer(o.e),
             _this = this;
-        var base64 = _this._tempCanvas.toDataURL({
+        var base64 = that.tempCanvas.toDataURL({
             format  : 'jpeg',
             left    : o.target.left,
             top     : o.target.top,
-            width   : o.target.width*o.target.scaleX,
-            height  : o.target.height*o.target.scaleY,
+            width   : o.target.getWidth(),
+            height  : o.target.getHeight()
         });
-        fabric.Image.fromURL(base64, function(img) {
-            that.canvas.remove(that.activeControl._object);
-            _this._object = img.set({left: o.target.left, top: o.target.top,className   : _this});
-
-            _this._object.setControlVisible('mtr', false);
-            _this._object.setControlVisible('mt', false);
-            _this._object.setControlVisible('ml', false);
-            _this._object.setControlVisible('mr', false);
-            _this._object.setControlVisible('mb', false);
-            _this._object.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(4 * that.options.scale)}));
-            _this._object.applyFilters(that.canvas.renderAll.bind(that.canvas));
-            that.canvas.add(_this._object).renderAll();
-            that.canvas.setActiveObject(_this._object);
-            that.canvas.renderAll();
-        });
+        that.activeControl._object.original_object.src = base64;
     },
     _onMoving: function(that,o){
         if(!o)return;
         var _mouse = that.canvas.getPointer(o.e),
-            _this = this;
-        console.log(that.activeControl);
-        var base64 = that.activeControl._tempCanvas.toDataURL({
+            _this = this, _temp;
+        var base64 = that.tempCanvas.toDataURL({
             format  : 'jpeg',
             left    : o.target.left,
             top     : o.target.top,
-            width   : o.target.width*o.target.scaleX,
-            height  : o.target.height*o.target.scaleY,
+            width   : o.target.getWidth(),
+            height  : o.target.getHeight()
         });
-        fabric.Image.fromURL(base64, function(img) {
-            that.canvas.remove(that.activeControl._object);
-            _this._object = img.set({left: o.target.left, top: o.target.top,className   : _this});
-
-            _this._object.setControlVisible('mtr', false);
-            _this._object.setControlVisible('mt', false);
-            _this._object.setControlVisible('ml', false);
-            _this._object.setControlVisible('mr', false);
-            _this._object.setControlVisible('mb', false);
-            _this._object.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(4 * that.options.scale)}));
-            _this._object.applyFilters(that.canvas.renderAll.bind(that.canvas));
-            that.canvas.add(_this._object).renderAll();
-            that.canvas.setActiveObject(_this._object);
-            that.canvas.renderAll();
-        });
+        that.canvas.getActiveObject().original_object.src = base64;
     }
 });
 TextControl = createClass({
