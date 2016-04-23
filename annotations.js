@@ -121,7 +121,7 @@ AnnotationLayer = createClass({
 			this._onCanvasEvents();
 		}
 		if (options.image) {
-            this.canvasImage = options.image;
+      this.canvasImage = options.image;
 			_canvas.setBackgroundImage(options.image,
 				function(){
 					if(options.scale){
@@ -147,7 +147,20 @@ AnnotationLayer = createClass({
                     that.selectedObject._onMouseDown(that,o);
     			}
                 else if(that.activeControl){
-                    that.activeControl._onMouseDown(that,o);
+									  // We create a new version of our active control on mouse down
+										if(that.activeControl instanceof ArrowControl){
+											that.activeControl = new ArrowControl(that.activeControl._opts);
+										}
+										if(that.activeControl instanceof SquareControl){
+											that.activeControl = new SquareControl(that.activeControl._opts);
+										}
+										if(that.activeControl instanceof OvalControl){
+											that.activeControl = new OvalControl(that.activeControl._opts);
+										}
+										if(that.activeControl instanceof PencilControl){
+											that.activeControl = new PencilControl(that.activeControl._opts);
+										}
+										that.activeControl._onMouseDown(that,o);
                 }
     		});
     		this.canvas.on('mouse:move', function(o){
@@ -205,8 +218,13 @@ AnnotationLayer = createClass({
         this.canvas.renderAll();
     },
     delete: function(){
-        var object = this.canvas.getActiveObject();
-        this.canvas.renderAll();
+			if(this.selectedObject) {
+				var object = this.canvas.getActiveObject();
+				object.remove();
+			} else {
+				this.activeControl.delete();
+			}
+      this.canvas.renderAll();
     },
     getCanvas: function(){
         return this.canvas;
@@ -254,8 +272,10 @@ ArrowControl = createClass({
     _line:true,
     _circle:true,
     _arrow:true,
+		_opts : false,
     initialize : function(options){
         options || (options = {});
+				this._opts = options;
         this._line = new fabric.Line([0,0,0,0], {
             stroke: options.fillColor || '#000',
             selectable: true,
@@ -324,6 +344,11 @@ ArrowControl = createClass({
     getObject: function(){
         return this._object;
     },
+		delete: function(){
+			this._line.remove();
+			this._circle.remove();
+			this._arrow.remove();
+		},
     _calcArrowAngle: function(x1, y1, x2, y2) {
         var angle = 0,x, y;
 
@@ -470,8 +495,10 @@ SquareControl = createClass({
 	_object:null,
 	_mouseDownPosition:null,
 	_isMouseDown:false,
+	_opts : false,
     initialize : function(options){
         options || (options = {});
+				this._opts = options;
         this._object = new fabric.Rect({
             top         :0,
             left        :0,
@@ -514,6 +541,9 @@ SquareControl = createClass({
     get: function(p){
     	return this._object.get(p);
     },
+		delete: function(){
+			this._object.remove();
+		},
     getObject: function(){
     	return this._object;
     },
@@ -574,8 +604,10 @@ OvalControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
+		_opts:false,
     initialize : function(options){
         options || (options = {});
+				this._opts = options;
         this._object = new fabric.Ellipse({
             top         :0,
             left        :0,
@@ -620,6 +652,9 @@ OvalControl = createClass({
     getObject: function(){
         return this._object;
     },
+		delete: function(){
+			this._object.remove();
+		},
     _onMouseDown: function(that,o){
         if(!that.activeControl.get('isNew'))return;
         this._isMouseDown=true;
@@ -682,8 +717,10 @@ PencilControl = createClass({
     _mouseDownPosition:null,
     _isMouseDown:false,
     _option:null,
+		_opts:false,
     initialize : function(options){
         options || (options = {});
+				this._opts = options;
         if(options.layer && options.layer._startDrawing){
             options.layer._startDrawing(options);
         }
@@ -697,11 +734,14 @@ PencilControl = createClass({
     getObject: function(){
         return this._object;
     },
+		delete: function(){
+			this._object.remove();
+		},
     _onMouseDown: function(that,o){
         that.canvas.isDrawingMode = true;
     },
     _onMouseMove: function(that,o){
-        
+
     },
     _onMouseUp: function(that,o){
         var size    = that.canvas.size();
@@ -898,8 +938,10 @@ TextControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
+		_opts : false,
     initialize : function(options){
         options || (options = {});
+				this._opts = options;
         this._object = new fabric.IText('', {
             top         :0,
             left        :0,
@@ -958,6 +1000,9 @@ TextControl = createClass({
     getObject: function(){
         return this._object;
     },
+		delete: function(){
+			this._object.remove();
+		},
     _onMouseDown: function(that,o){
     },
     _onMouseMove: function(that,o){
