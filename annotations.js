@@ -118,6 +118,16 @@ AnnotationLayer = createClass({
 		if (options.element) {
 			var el = $(options.element);
 			this.canvas = _canvas = new fabric.Canvas(el[0],{selection:false});
+            if( window.devicePixelRatio !== 1 ){
+                var c = this.canvas.getElement(); // canvas = fabric.Canvas
+                var w = c.width, h = c.height;
+                // Scale the canvas up by two for retina
+                // just like for an image
+                c.setAttribute('width', w*window.devicePixelRatio);
+                c.setAttribute('height', h*window.devicePixelRatio);
+                // finally set the scale of the context
+                c.getContext('2d').scale(window.devicePixelRatio, window.devicePixelRatio);
+            }
             _canvas.perPixelTargetFind = true;
             _canvas.uniScaleTransform = true;
 			this._onCanvasEvents();
@@ -144,7 +154,7 @@ AnnotationLayer = createClass({
                                     width:_w,
                                     height:_h
                                 });
-                                image1.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(3.5 * options.scale)}));
+                                image1.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(5)}));
                                 image1.applyFilters(function(){
                                     _this.tempCanvas.setBackgroundImage(image1);
                                     _this.tempCanvas.renderAll();
@@ -226,8 +236,33 @@ AnnotationLayer = createClass({
     	this.canvas.clear();
         this.canvas.renderAll();
     },
+    set: function(o){
+        if(this.selectedObject){
+            if(this.selectedObject.set){
+                this.selectedObject.set(o);
+            }
+        }
+        else if(this.activeControl){
+            if(this.activeControl.set){
+                this.activeControl.set(o);
+            }
+        }
+    },
+    get: function(o){
+        if(this.selectedObject){
+            if(this.selectedObject.get){
+                return this.selectedObject.get(o);
+            }
+        }
+        else if(this.activeControl){
+            if(this.activeControl.get){
+                return this.activeControl.get(o);
+            }
+        }
+    },
     delete: function(){
         var object = this.canvas.getActiveObject();
+        this.canvas.remove(object);
         this.canvas.renderAll();
     },
     getCanvas: function(){
@@ -807,13 +842,25 @@ BlurControl = createClass({
             width   : Math.abs(pointer.x - this._mouseDownPosition.x),
             height  : Math.abs(pointer.y - this._mouseDownPosition.y)
         });
+        if(this._mouseDownPosition.x > pointer.x){
+            that.activeControl.set({
+                left: Math.abs(pointer.x)
+            });
+        }
+        if(this._mouseDownPosition.y > pointer.y){
+            that.activeControl.set({
+                top: Math.abs(pointer.y)
+            });
+        }
         that.canvas.renderAll();
     },
     _onMouseUp: function(that,o){
         if(!this._isMouseDown)return;
         this._isMouseDown=false;
         var _mouse = that.canvas.getPointer(o.e),
-            _this = this;
+            _this = this,
+            object_left = that.activeControl._object.left || _this._mouseDownPosition.x,
+            object_top = that.activeControl._object.top || _this._mouseDownPosition.y;
         that.activeControl.set({
             isNew   : false
         });
@@ -822,8 +869,8 @@ BlurControl = createClass({
 
         var base64 = that.tempCanvas.toDataURL({
             format  : 'jpeg',
-            left    : _this._mouseDownPosition.x,
-            top     : _this._mouseDownPosition.y,
+            left    : object_left,
+            top     : object_top,
             width   : that.activeControl._object.getWidth(),
             height  : that.activeControl._object.getHeight(),
         });
@@ -835,7 +882,7 @@ BlurControl = createClass({
                 img = new fabric.Image(ImageObj);
                 img.original_object = ImageObj;
                 ImageObj.loaded = false;
-                _this._object = img.set({left: _this._mouseDownPosition.x, top: _this._mouseDownPosition.y,className   : _this});
+                _this._object = img.set({left: object_left, top: object_top,className   : _this});
                 _this._object.setControlVisible('mtr', false);
                 _this._object.setControlVisible('mt', false);
                 _this._object.setControlVisible('ml', false);
@@ -853,8 +900,8 @@ BlurControl = createClass({
             _this = this;
         var base64 = that.tempCanvas.toDataURL({
             format  : 'jpeg',
-            left    : o.target.left,
-            top     : o.target.top,
+            left    : o.target.left+2,
+            top     : o.target.top+2,
             width   : o.target.getWidth(),
             height  : o.target.getHeight()
         });
@@ -866,8 +913,8 @@ BlurControl = createClass({
             _this = this, _temp;
         var base64 = that.tempCanvas.toDataURL({
             format  : 'jpeg',
-            left    : o.target.left,
-            top     : o.target.top,
+            left    : o.target.left+2,
+            top     : o.target.top+2,
             width   : o.target.getWidth(),
             height  : o.target.getHeight()
         });
