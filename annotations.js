@@ -126,7 +126,6 @@ AnnotationLayer = createClass({
       this.canvasImage = options.image;
       _canvas.setBackgroundImage(options.image,
         function(){
-          if(options.scale){
             _canvas.setBackgroundImage(_canvas.backgroundImage, function(){
               _canvas.renderAll();
               console.log("Background scale: " + _canvas.backgroundImage.scaleX + " " + _canvas.backgroundImage.scaleY);
@@ -162,7 +161,7 @@ AnnotationLayer = createClass({
               scaleX   : 1.0,
               scaleY   : 1.0
             });
-            }
+
           }
         );
       }
