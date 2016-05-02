@@ -1,3 +1,10 @@
+//
+//  annotations.js
+//
+//  By Taqi Mustafa for Droplr (http://droplr.com).
+//  Copyright (c) 2016 Droplr. All rights reserved.
+//
+
 /**
  * @function
  * @ignore
