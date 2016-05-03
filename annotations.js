@@ -156,7 +156,7 @@ AnnotationLayer = createClass({
                       width:_w,
                       height:_h
                   });
-                  image1.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(5)}));
+                  image1.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(5 * window.devicePixelRatio)}));
                   image1.applyFilters(function(){
                       _this.tempCanvas.setBackgroundImage(image1);
                       _this.tempCanvas.renderAll();
