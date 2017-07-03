@@ -123,8 +123,7 @@ AnnotationLayer = createClass({
     var _canvas  = this.canvas;
     var _this    = this;
     if (options.element) {
-      var el = $(options.element);
-      this.canvas = _canvas = new fabric.Canvas(el[0],{selection:false});
+      this.canvas = _canvas = new fabric.Canvas(options.element,{selection:false});
       _canvas.perPixelTargetFind = true;
       _canvas.uniScaleTransform = true;
       this._onCanvasEvents();
@@ -143,8 +142,12 @@ AnnotationLayer = createClass({
               _canvas.setWidth(_w).setHeight(_h);
               _this.tempCanvas.setWidth(_w).setHeight(_h);
 
-              $(options.element).css("width", _w / window.devicePixelRatio).css("height", _h / window.devicePixelRatio);
-              $(".upper-canvas").css("width", _w / window.devicePixelRatio).css("height", _h / window.devicePixelRatio);
+              options.element.style.width = _w / window.devicePixelRatio + 'px';
+              options.element.style.height = _h / window.devicePixelRatio + 'px';
+              document.querySelectorAll('.upper-canvas').forEach(function(el) {
+                el.style.width = _w / window.devicePixelRatio + 'px';
+                el.style.height = _h / window.devicePixelRatio + 'px';
+              })
 
               var ImageObj1 = new Image();
               ImageObj1.onload = function() {
