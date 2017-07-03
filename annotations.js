@@ -1075,3 +1075,13 @@ TextControl = createClass({
       that.canvas.renderAll();
     }
 });
+
+module.exports = {
+  AnnotationLayer,
+  ArrowControl,
+  SquareControl,
+  OvalControl,
+  PencilControl,
+  BlurControl,
+  TextControl
+}
