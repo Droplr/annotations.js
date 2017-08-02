@@ -142,11 +142,11 @@ AnnotationLayer = createClass({
               _canvas.setWidth(_w).setHeight(_h);
               _this.tempCanvas.setWidth(_w).setHeight(_h);
 
-              options.element.style.width = _w / window.devicePixelRatio + 'px';
-              options.element.style.height = _h / window.devicePixelRatio + 'px';
-              document.querySelectorAll('.upper-canvas').forEach(function(el) {
-                el.style.width = _w / window.devicePixelRatio + 'px';
-                el.style.height = _h / window.devicePixelRatio + 'px';
+              options.element.style.width = _w / (options.imagePixelRatio || window.devicePixelRatio) + 'px';
+              options.element.style.height = _h / (options.imagePixelRatio || window.devicePixelRatio) + 'px';
+              document.querySelectorAll('.upper-canvas, .canvas-container').forEach(function(el) {
+                el.style.width = _w / (options.imagePixelRatio || window.devicePixelRatio) + 'px';
+                el.style.height = _h / (options.imagePixelRatio || window.devicePixelRatio) + 'px';
               })
 
               var ImageObj1 = new Image();
@@ -343,8 +343,9 @@ ArrowControl = createClass({
     initialize : function(options){
       options || (options = {});
 
-      var scale = window.devicePixelRatio;
-
+      var scale = options.scale || window.devicePixelRatio;
+      console.log("Scale %s", scale)
+      
       this._opts = options;
       this._line = new fabric.Line([0,0,0,0], {
           stroke: options.fillColor || '#000',
@@ -570,7 +571,7 @@ SquareControl = createClass({
     initialize : function(options){
       options || (options = {});
 
-      var scale = window.devicePixelRatio;
+      var scale = options.scale || window.devicePixelRatio;
 
       this._opts = options;
       this._object = new fabric.Rect({
@@ -683,7 +684,7 @@ OvalControl = createClass({
     initialize : function(options){
       options || (options = {});
 
-      var scale = window.devicePixelRatio;
+      var scale = options.scale || window.devicePixelRatio;
 
       this._opts = options;
       this._object = new fabric.Ellipse({
@@ -845,6 +846,9 @@ BlurControl = createClass({
     _tempCanvas:null,
     initialize : function(options){
       options || (options = {});
+      
+      var scale = options.scale || window.devicePixelRatio;
+
       this._object = new fabric.Rect({
           top         :0,
           left        :0,
@@ -870,7 +874,7 @@ BlurControl = createClass({
       }
       if(options.borderWidth){
           this._object.set({
-              strokeWidth   : options.borderWidth
+              strokeWidth   : options.borderWidth * scale
           });
       }
       if(options.borderColor){
@@ -994,7 +998,7 @@ TextControl = createClass({
     initialize : function(options){
         options || (options = {});
 
-        var scale = window.devicePixelRatio;
+        var scale = options.scale || window.devicePixelRatio;
 
         this._opts = options;
         this._object = new fabric.IText('', {
@@ -1034,7 +1038,7 @@ TextControl = createClass({
         if(options.shadowWidth || options.shadowColor){
           this._object.setShadow({
             color   : options.shadowColor   || '#999',
-            blur    : (options.shadowWidth   || 0) * window.devicePixelRatio,
+            blur    : (options.shadowWidth   || 0) * scale,
             offsetX   : 0,
             offsetY   : 0
           });
@@ -1042,7 +1046,7 @@ TextControl = createClass({
         if(options.borderWidth || options.borderColor){
           this._object.set({
             stroke   : options.borderColor,
-            strokeWidth   : options.borderWidth
+            strokeWidth   : options.borderWidth * scale
           });
         }
     },
