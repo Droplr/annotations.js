@@ -119,7 +119,7 @@ fabric.Text.prototype._renderText = function(ctx) {
  * Creates a new Annotation Layer.
  * @class
  */
-AnnotationLayer = createClass({
+var AnnotationLayer = createClass({
   /**
   * A variable in the AnnotationLayer, represent canvas of AnnotationLayer.
   * @type {Object}
@@ -359,7 +359,7 @@ AnnotationLayer = createClass({
     }
 });
 
-ArrowControl = createClass({
+var ArrowControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
@@ -621,7 +621,7 @@ ArrowControl = createClass({
     }
 });
 
-SquareControl = createClass({
+var SquareControl = createClass({
   _object:null,
   _mouseDownPosition:null,
   _isMouseDown:false,
@@ -734,7 +734,7 @@ SquareControl = createClass({
     }
 });
 
-OvalControl = createClass({
+var OvalControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
@@ -850,7 +850,7 @@ OvalControl = createClass({
     }
 });
 
-PencilControl = createClass({
+var PencilControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
@@ -897,7 +897,7 @@ PencilControl = createClass({
     }
 });
 
-BlurControl = createClass({
+var BlurControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
@@ -1048,7 +1048,7 @@ BlurControl = createClass({
     }
 });
 
-TextControl = createClass({
+var TextControl = createClass({
     _object:null,
     _mouseDownPosition:null,
     _isMouseDown:false,
