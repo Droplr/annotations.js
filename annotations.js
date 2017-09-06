@@ -350,7 +350,7 @@ ArrowControl = createClass({
       this._line = new fabric.Line([0,0,0,0], {
           stroke: options.fillColor || '#000',
           selectable: true,
-          strokeWidth: 2 * scale,
+          strokeWidth: 5 * scale,
           hasBorders: false,
           hasControls: false,
           originX: 'center',
@@ -365,7 +365,9 @@ ArrowControl = createClass({
       deltaX = this._line.left - centerX,
       deltaY = this._line.top - centerY;
 
-      this._arrow = new fabric.Triangle({
+      this._arrow = new fabric.Path(
+        'M37.7942037,34.36154,C40.2831467,37.4783829,44.8275341,37.9873963,47.944377,35.4984533,C51.0612199,33.0095103,51.5702333,28.465123,49.0812903,25.3482801,L31.2544041,3.024103,C28.3631247,-0.596576002,22.8585968,-0.596576002,19.9673174,3.024103,L2.14043118,25.3482801,C-0.348511808,28.465123,0.160501648,33.0095103,3.27734455,35.4984533,C6.39418746,37.9873963,10.9385748,37.4783829,13.4275178,34.36154,L25.6108608,19.1046352,L37.7942037,34.36154,Z',
+        {  
           left: this._line.get('x2') + deltaX,
           top: this._line.get('y2') + deltaY,
           originX: 'center',
@@ -381,9 +383,11 @@ ArrowControl = createClass({
           height: 20 * scale,
           fill: options.fillColor || '#000',
           className   : this
-      });
+        }
+      )      
       this._arrow.line = this._line;
 
+      
       this._circle = new fabric.Circle({
           left: this._line.get('x1') + deltaX,
           top: this._line.get('y1') + deltaY,
@@ -490,7 +494,7 @@ ArrowControl = createClass({
       });
     },
     _onMouseDown: function(that,o){
-      if(!this._line.inNew)return;
+      if(!this._line.inNew) return;
       this._isMouseDown=true;
       this._mouseDownPosition = that.canvas.getPointer(o.e);
       this._line.set({
@@ -509,7 +513,7 @@ ArrowControl = createClass({
           'left': this._line.x2 + deltaX,
           'top': this._line.y2 + deltaY,
           'angle': angle - 90
-      }).setCoords();
+      }).setCoords();    
 
       this._line.circle.set({
           'left': this._line.x1 + deltaX,
