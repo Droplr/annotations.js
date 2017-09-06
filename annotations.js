@@ -360,6 +360,7 @@ ArrowControl = createClass({
           inNew   : true,
           className   : this
       });
+      this._line.parentObject = this;
       var centerX = (this._line.x1 + this._line.x2) / 2,
           centerY = (this._line.y1 + this._line.y2) / 2;
       deltaX = this._line.left - centerX,
@@ -384,14 +385,14 @@ ArrowControl = createClass({
           fill: options.fillColor || '#000',
           className   : this
         }
-      )      
+      )   
+      this._arrow.parentObject = this;   
       this._arrow.line = this._line;
 
-      
       this._circle = new fabric.Circle({
           left: this._line.get('x1') + deltaX,
           top: this._line.get('y1') + deltaY,
-          radius: 3 * scale,
+          radius: 5 * scale,
           stroke: options.fillColor || '#000',
           strokeWidth: 3 * scale,
           originX: 'center',
@@ -405,6 +406,7 @@ ArrowControl = createClass({
           fill: options.fillColor || '#000',
           className   : this
       });
+      this._circle.parentObject = this;         
       this._circle.line = this._line;
       this._line.customType = this._arrow.customType = this._circle.customType = 'arrow';
       this._line.circle = this._arrow.circle = this._circle;
@@ -419,7 +421,7 @@ ArrowControl = createClass({
     getObject: function(){
       return this._object;
     },
-    delete: function(){
+    delete: function(obj){
       this._line.remove();
       this._circle.remove();
       this._arrow.remove();
