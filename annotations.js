@@ -110,11 +110,9 @@ function createClass() {
  * @return void
  */
 fabric.Text.prototype._renderText = function(ctx) {
-  this._translateForTextAlign(ctx);
   this._renderTextFill(ctx);
   this._renderTextStroke(ctx);
   this._renderTextFill(ctx);
-  this._translateForTextAlign(ctx, true);
 };
 
 /**
@@ -1029,8 +1027,7 @@ TextControl = createClass({
             left        :0,
             padding     :1,
             isNew       :true,
-            fill        :'#333',
-            hasControls: true
+            fill        :'#333'
         });
         this._object.setControlVisible('mtr', false);
         this._object.setControlVisible('mt', false);
