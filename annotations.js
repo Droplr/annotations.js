@@ -196,9 +196,11 @@ AnnotationLayer = createClass({
         var that = this;
         this.canvas.on('mouse:down', function(o){
           if(that.selectedObject){
-          	that.selectedObject._onMouseDown(that,o);
+            return;          
           }
-          else if(that.activeControl){
+          if(that.activeControl){
+            console.log('activeControl mouse:down')
+            
             // We create a new version of our active control on mouse down
             if(that.activeControl instanceof ArrowControl){
               that.activeControl = new ArrowControl(that.activeControl._opts);
@@ -212,12 +214,15 @@ AnnotationLayer = createClass({
             if(that.activeControl instanceof PencilControl){
               that.activeControl = new PencilControl(that.activeControl._opts);
             }
+            if(that.activeControl instanceof TextControl){
+              that.activeControl = new TextControl(that.activeControl._opts);
+            }
             that.activeControl._onMouseDown(that,o);
           }
         });
 
         this.canvas.on('mouse:move', function(o){
-          if(that.selectedObject){
+          if(that.selectedObject && that.selectedObject._onMouseMove){
             that.selectedObject._onMouseMove(that,o);
           }
           else if(that.activeControl){
@@ -226,7 +231,13 @@ AnnotationLayer = createClass({
         });
 
         this.canvas.on('mouse:up', function(o){
-          if(that.selectedObject){
+          console.log('mouse:up %j', that.selectedObject)
+          
+          if(that.selectedObject && that.selectedObject.text) {
+            // Don't trigger mouse up if we've got a text object
+            return;
+          }
+          if(that.selectedObject && that.selectedObject._onMouseUp){
             that.selectedObject._onMouseUp(that,o);
           }
           else if(that.activeControl){
@@ -261,9 +272,8 @@ AnnotationLayer = createClass({
         });
 
         this.canvas.on('object:selected', function(o){
-          if(o.target.className){
-            that.selectedObject = o.target.className.__proto__;
-          }
+          console.log('object:selected %j', o.target)
+          that.selectedObject = o.target;
         });
 
         this.canvas.on('selection:cleared', function(o){
