@@ -1093,6 +1093,11 @@ TextControl = createClass({
             fontFamily   : options.fontFamily
           });
         }
+        if(options.fontWeight){
+          this._object.set({
+            fontWeight   : options.fontWeight
+          });
+        }
         if(options.shadowWidth || options.shadowColor){
           this._object.setShadow({
             color   : options.shadowColor   || '#999',
