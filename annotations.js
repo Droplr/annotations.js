@@ -311,6 +311,9 @@ AnnotationLayer = createClass({
     },
     delete: function(){
       if(this.selectedObject) {
+        if(this.selectedObject.arrow) this.selectedObject.arrow.remove();
+        if(this.selectedObject.circle) this.selectedObject.circle.remove();
+        
         var object = this.canvas.getActiveObject();
         object.remove();
       } else {
