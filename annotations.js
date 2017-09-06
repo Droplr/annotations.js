@@ -98,7 +98,24 @@ function createClass() {
   return klass;
 }
 
-
+/**
+ * 
+ * fabric.Textbox.prototype._renderText
+ * 
+ * Extended to reverse order of stroke and filling, to allow for more pleasing
+ * stroke.
+ * 
+ * @see    http://stackoverflow.com/questions/26639132/canvas-fabricjs-separate-stroke-from-text-edge
+ * @access private
+ * @return void
+ */
+fabric.Text.prototype._renderText = function(ctx) {
+  this._translateForTextAlign(ctx);
+  this._renderTextFill(ctx);
+  this._renderTextStroke(ctx);
+  this._renderTextFill(ctx);
+  this._translateForTextAlign(ctx, true);
+};
 
 /**
  * Creates a new Annotation Layer.
@@ -1012,7 +1029,8 @@ TextControl = createClass({
             left        :0,
             padding     :1,
             isNew       :true,
-            fill        :'#333'
+            fill        :'#333',
+            hasControls: true
         });
         this._object.setControlVisible('mtr', false);
         this._object.setControlVisible('mt', false);
@@ -1052,7 +1070,8 @@ TextControl = createClass({
         if(options.borderWidth || options.borderColor){
           this._object.set({
             stroke   : options.borderColor,
-            strokeWidth   : options.borderWidth * scale
+            strokeWidth   : options.borderWidth * scale,
+            strokeLineJoin: 'round'
           });
         }
     },
