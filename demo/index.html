@@ -13,6 +13,7 @@
 		<div class="row" style="margin:10px;">
 			<div class="btn-group" role="group" id="buttonControl">
 				<button type="button" class="btn btn-default" data-type="arrow">Arrow</button>
+				<button type="button" class="btn btn-default" data-type="line">Line</button>				
 				<button type="button" class="btn btn-default" data-type="square">Square</button>
 				<button type="button" class="btn btn-default" data-type="oval">Oval</button>
 				<button type="button" class="btn btn-default" data-type="pencil">Pencil</button>
@@ -41,6 +42,13 @@ jQuery(document).ready(function($) {
 			annotation.activeControl = new ArrowControl({
 				fillColor: "#e53737",
 				layer: annotation,
+				scale: 2.0
+			});
+		}
+		else if(type == 'line'){
+			annotation.activeControl = new LineControl({
+				fillColor   : "#e53737",
+				layer 		: annotation,
 				scale: 2.0
 			});
 		}

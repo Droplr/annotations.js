@@ -204,6 +204,9 @@ initialize : function(options){
           if(that.activeControl instanceof ArrowControl){
             that.activeControl = new ArrowControl(that.activeControl._opts);
           }
+          if(that.activeControl instanceof LineControl){
+            that.activeControl = new LineControl(that.activeControl._opts);
+          }
           if(that.activeControl instanceof SquareControl){
             that.activeControl = new SquareControl(that.activeControl._opts);
           }
@@ -616,6 +619,121 @@ var ArrowControl = createClass({
         _this._moveEnd(_this._line.circle);
         that.canvas.renderAll();
     });
+    this._line.on('moving', function () {
+        _this._moveLine(_this._line);
+    });
+    console.log(this._firstOne);
+  }
+});
+
+var LineControl = createClass({
+  _object:null,
+  _mouseDownPosition:null,
+  _isMouseDown:false,
+  _firstOne:true,
+  _line:true,
+  _opts : false,
+  initialize : function(options){
+    options || (options = {});
+
+    var scale = options.scale || window.devicePixelRatio;
+    console.log("Scale %s", scale)
+    
+    this._opts = options;
+    this._line = new fabric.Line([0,0,0,0], {
+        stroke: options.fillColor || '#000',
+        selectable: true,
+        strokeWidth: 5 * scale,
+        hasBorders: false,
+        hasControls: false,
+        originX: 'center',
+        originY: 'center',
+        lockScalingX: true,
+        lockScalingY: true,
+        inNew   : true,
+        className   : this
+    });
+  },
+  setFillColor: function(color) {
+    this._opts.fillColor = color;
+  },
+  set: function(p){
+    this._object.set(p);
+  },
+  get: function(p){
+    return this._object.get(p);
+  },
+  getObject: function(){
+    return this._object;
+  },
+  delete: function(obj){
+    this._line.remove();
+  },
+  _moveEnd: function(obj) {
+    var p = obj,x1, y1, x2, y2;
+
+    if (obj.pointType === 'arrow_end') {
+      obj.line.set('x1', obj.get('left'));
+      obj.line.set('y1', obj.get('top'));
+    } else {
+      obj.line.set('x2', obj.get('left'));
+      obj.line.set('y2', obj.get('top'));
+    }
+    obj.line._setWidthHeight();
+
+    x1 = obj.line.get('x1');
+    y1 = obj.line.get('y1');
+    x2 = obj.line.get('x2');
+    y2 = obj.line.get('y2');
+
+    obj.line.setCoords();
+  },
+  _moveLine: function(obj){
+    var oldCenterX = (obj.x1 + obj.x2) / 2,
+        oldCenterY = (obj.y1 + obj.y2) / 2,
+        deltaX = obj.left - oldCenterX,
+        deltaY = obj.top - oldCenterY;
+
+        obj.set({
+      'x1': obj.x1 + deltaX,
+      'y1': obj.y1 + deltaY,
+      'x2': obj.x2 + deltaX,
+      'y2': obj.y2 + deltaY
+    });
+
+    obj.set({
+      'left': (obj.x1 + obj.x2) / 2,
+      'top': (obj.y1 + obj.y2) / 2
+    });
+  },
+  _onMouseDown: function(that,o){
+    if(!this._line.inNew) return;
+    this._isMouseDown=true;
+    this._mouseDownPosition = that.canvas.getPointer(o.e);
+    this._line.set({
+        'x1'  : Math.abs(this._mouseDownPosition.x),
+        'y1'  : Math.abs(this._mouseDownPosition.y),
+        'x2'  : Math.abs(this._mouseDownPosition.x),
+        'y2'  : Math.abs(this._mouseDownPosition.y)
+    }).setCoords();
+    
+    that.canvas.add(this._line);
+    this._line.inNew=false;
+  },
+  _onMouseMove: function(that,o){
+    if(!this._isMouseDown)return;
+    var pointer = that.canvas.getPointer(o.e);
+    this._line.set({
+        'x2'  : Math.abs(pointer.x),
+        'y2'  : Math.abs(pointer.y)
+    }).setCoords();
+
+    that.canvas.renderAll();
+  },
+  _onMouseUp: function(that,o){
+    if(!this._isMouseDown)return;
+    this._firstOne=this._isMouseDown=false;
+    var _this = this;
     this._line.on('moving', function () {
         _this._moveLine(_this._line);
     });
@@ -1167,6 +1285,7 @@ var TextControl = createClass({
 module.exports = {
 AnnotationLayer,
 ArrowControl,
+LineControl,
 SquareControl,
 OvalControl,
 PencilControl,
