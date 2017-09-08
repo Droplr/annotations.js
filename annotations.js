@@ -651,7 +651,8 @@ var LineControl = createClass({
         lockScalingX: true,
         lockScalingY: true,
         inNew   : true,
-        className   : this
+        className   : this,
+        strokeLineCap: "round"
     });
   },
   setFillColor: function(color) {
