@@ -150,20 +150,11 @@ initialize : function(options){
           _canvas.setBackgroundImage(_canvas.backgroundImage, function(){
             _canvas.renderAll();
             console.log("Background scale: " + _canvas.backgroundImage.scaleX + " " + _canvas.backgroundImage.scaleY);
+            _this._calculateSize();
+
             var _w = _canvas.backgroundImage.width;
             var _h = _canvas.backgroundImage.height;
-
-
-            _canvas.setWidth(_w).setHeight(_h);
-            _this.tempCanvas.setWidth(_w).setHeight(_h);
-
-            options.element.style.width = _w / (options.imagePixelRatio || window.devicePixelRatio) + 'px';
-            options.element.style.height = _h / (options.imagePixelRatio || window.devicePixelRatio) + 'px';
-            document.querySelectorAll('.upper-canvas, .canvas-container').forEach(function(el) {
-              el.style.width = _w / (options.imagePixelRatio || window.devicePixelRatio) + 'px';
-              el.style.height = _h / (options.imagePixelRatio || window.devicePixelRatio) + 'px';
-            })
-
+        
             var ImageObj1 = new Image();
             ImageObj1.onload = function() {
                 var image1 = new fabric.Image(ImageObj1);
@@ -339,7 +330,9 @@ initialize : function(options){
         quality: 1
       }
     }
-    return this.canvas.toDataURL(option);
+    var dataUrl = this.canvas.toDataURL(option);
+    this._calculateSize();
+    return dataUrl;
   },
   _startDrawing: function(options){
     this.canvas.isDrawingMode = true;
@@ -358,6 +351,20 @@ initialize : function(options){
   },
   _stopDrawing: function(){
     this.canvas.isDrawingMode = false;
+  },
+  _calculateSize: function() {
+    var _w = this.canvas.backgroundImage.width;
+    var _h = this.canvas.backgroundImage.height;
+
+    this.canvas.setWidth(_w).setHeight(_h);
+    this.tempCanvas.setWidth(_w).setHeight(_h);
+    this.options.element.style.width = _w / (this.options.imagePixelRatio || window.devicePixelRatio) + 'px';
+    this.options.element.style.height = _h / (this.options.imagePixelRatio || window.devicePixelRatio) + 'px';
+
+    document.querySelectorAll('.upper-canvas, .canvas-container, #edit-image').forEach(function(el) {
+      el.style.width = _w / (this.options.imagePixelRatio || window.devicePixelRatio) + 'px';
+      el.style.height = _h / (this.options.imagePixelRatio || window.devicePixelRatio) + 'px';
+    }.bind(this))
   }
 });
 
