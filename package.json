@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/Droplr/annotations.js/issues"
   },
-  "homepage": "https://github.com/Droplr/annotations.js#readme"
+  "homepage": "https://github.com/Droplr/annotations.js#readme",
+  "dependencies": {
+    "fabric": "^2.3.1"
+  }
 }
