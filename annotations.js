@@ -184,7 +184,7 @@ initialize : function(options){
 
           // We create a new version of our active control on mouse down
           if(that.activeControl instanceof Arrow){
-            that.activeControl = new Arrow(that.activeControl._opts);
+            that.activeControl = new Arrow(that.activeControl._options);
           }
           if(that.activeControl instanceof LineControl){
             that.activeControl = new LineControl(that.activeControl._opts);
@@ -295,11 +295,12 @@ initialize : function(options){
   },
   delete: function(){
     if(this.selectedObject) {
-      if(this.selectedObject.arrow) this.selectedObject.arrow.remove();
-      if(this.selectedObject.circle) this.selectedObject.circle.remove();
-
-      var object = this.canvas.getActiveObject();
-      object.remove();
+      if (this.selectedObject.delete) {
+        this.selectedObject.delete();
+      } else {
+        var object = this.canvas.getActiveObject();
+        object.remove();
+      }
     } else {
       this.activeControl.delete();
     }
