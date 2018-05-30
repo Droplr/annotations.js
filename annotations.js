@@ -167,7 +167,7 @@ initialize : function(options){
             });
             image1.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(5 * window.devicePixelRatio)}));
             image1.applyFilters();
-            _this.tempCanvas.setBackgroundImage(image1);
+            _this.tempCanvas.setBackgroundImage(image1.filters);
             _this.tempCanvas.renderAll();
           };
           ImageObj1.src = options.image;
