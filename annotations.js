@@ -1,4 +1,5 @@
 import Arrow from './lib/arrowController';
+import RectEmpty from './lib/rectEmptyController';
 
 var slice = Array.prototype.slice,
 emptyFunction = function() { },
@@ -189,8 +190,8 @@ initialize : function(options){
           if(that.activeControl instanceof LineControl){
             that.activeControl = new LineControl(that.activeControl._opts);
           }
-          if(that.activeControl instanceof SquareControl){
-            that.activeControl = new SquareControl(that.activeControl._opts);
+          if(that.activeControl instanceof RectEmpty){
+            that.activeControl = new RectEmpty(that.activeControl.options);
           }
           if(that.activeControl instanceof OvalControl){
             that.activeControl = new OvalControl(that.activeControl._opts);
@@ -230,15 +231,10 @@ initialize : function(options){
       });
 
       this.canvas.on('object:scaling', function(o){
-        if(that.selectedObject){
-          if(that.selectedObject._onScaling){
-            that.selectedObject._onScaling(that,o);
-          }
-        }
-        else if(that.activeControl){
-          if(that.activeControl._onScaling){
-            that.activeControl._onScaling(that,o);
-          }
+        if (that.selectedObject && that.selectedObject._onScaling) {
+          that.selectedObject._onScaling(that,o);
+        } else if (that.activeControl && that.activeControl._onScaling) {
+          that.activeControl._onScaling(that,o);
         }
       });
 
@@ -473,122 +469,6 @@ var LineControl = createClass({
         _this._moveLine(_this._line);
     });
     console.log(this._firstOne);
-  }
-});
-
-var SquareControl = createClass({
-_object:null,
-_mouseDownPosition:null,
-_isMouseDown:false,
-_opts : false,
-  initialize : function(options){
-    options || (options = {});
-
-    var scale = options.scale || window.devicePixelRatio;
-
-    this._opts = options;
-    this._object = new fabric.Rect({
-        top         :0,
-        left        :0,
-        isNew       :true,
-        width       :0,
-        height      :0,
-        strokeWidth :5 * scale,
-        stroke      :'red',
-        fill        :'transparent',
-        className   : this
-    });
-    this._object.setControlVisible('mtr', false);
-    this._object.setControlVisible('mt', false);
-    this._object.setControlVisible('ml', false);
-    this._object.setControlVisible('mr', false);
-    this._object.setControlVisible('mb', false);
-    if(options.fillColor){
-      this._object.set({
-        fill   : options.fillColor
-      });
-    }
-    if(options.borderWidth){
-      this._object.set({
-        strokeWidth   : options.borderWidth * scale
-      });
-    }
-    if(options.borderColor){
-      this._object.set({
-        stroke   : options.borderColor
-      });
-    }
-    if(options.layer && options.layer._stopDrawing){
-        options.layer._stopDrawing();
-        options.layer.canvas.discardActiveObject();
-    }
-  },
-  set: function(p){
-    this._object.set(p);
-  },
-  setFillColor: function(color) {
-    this._opts.fillColor = color;
-  },
-  get: function(p){
-    return this._object.get(p);
-  },
-  delete: function(){
-    this._object.remove();
-  },
-  getObject: function(){
-    return this._object;
-  },
-  _onMouseDown: function(that,o){
-    if(!that.activeControl.get('isNew'))return;
-    this._isMouseDown=true;
-    this._mouseDownPosition = that.canvas.getPointer(o.e);
-    that.activeControl.set({
-      left   : this._mouseDownPosition.x,
-      top   : this._mouseDownPosition.y
-    });
-    that.canvas.add(that.activeControl.getObject());
-    that.canvas.renderAll();
-  },
-  _onMouseMove: function(that,o){
-    if(!this._isMouseDown)return;
-    var pointer = that.canvas.getPointer(o.e);
-    that.activeControl.set({
-      width   : Math.abs(pointer.x - this._mouseDownPosition.x),
-      height   : Math.abs(pointer.y - this._mouseDownPosition.y)
-    });
-    if(this._mouseDownPosition.x > pointer.x){
-      that.activeControl.set({
-        left: Math.abs(pointer.x)
-      });
-    }
-    if(this._mouseDownPosition.y > pointer.y){
-      that.activeControl.set({
-        top: Math.abs(pointer.y)
-      });
-    }
-    that.canvas.renderAll();
-  },
-  _onMouseUp: function(that,o){
-    if(!this._isMouseDown)return;
-    this._isMouseDown=false;
-    that.activeControl.set({
-      isNew   : false
-    });
-    that.activeControl._object.setCoords();
-    console.log(that.activeControl.getObject());
-    that.canvas.setActiveObject(that.activeControl.getObject());
-    that.canvas.renderAll();
-  },
-  _onScaling: function(that,o){
-    if(!o)return;
-    var _w = o.target.width  * o.target.scaleX;
-    var _h = o.target.height * o.target.scaleY;
-    o.target.set({
-      width   : _w,
-      height  : _h,
-      scaleX  : 1,
-      scaleY  : 1
-    });
   }
 });
 
@@ -1021,7 +901,7 @@ module.exports = {
 AnnotationLayer,
 ArrowControl: Arrow,
 LineControl,
-SquareControl,
+SquareControl: RectEmpty,
 OvalControl,
 PencilControl,
 BlurControl,
