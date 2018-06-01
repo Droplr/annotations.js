@@ -184,7 +184,7 @@ initialize : function(options){
 
           // We create a new version of our active control on mouse down
           if(that.activeControl instanceof Arrow){
-            that.activeControl = new Arrow(that.activeControl._options);
+            that.activeControl = new Arrow(that.activeControl.options);
           }
           if(that.activeControl instanceof LineControl){
             that.activeControl = new LineControl(that.activeControl._opts);
