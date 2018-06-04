@@ -139,38 +139,36 @@ initialize : function(options){
     this.canvasImage = options.image;
     _canvas.setBackgroundImage(options.image,
       function(){
-          _canvas.setBackgroundImage(_canvas.backgroundImage, function(){
-            _canvas.renderAll();
-            console.log("Background scale: " + _canvas.backgroundImage.scaleX + " " + _canvas.backgroundImage.scaleY);
-            _this._calculateSize();
+        _canvas.setBackgroundImage(_canvas.backgroundImage, function(){
+          _canvas.renderAll();
+          console.log("Background scale: " + _canvas.backgroundImage.scaleX + " " + _canvas.backgroundImage.scaleY);
+          _this._calculateSize();
 
-            var _w = _canvas.backgroundImage.width;
-            var _h = _canvas.backgroundImage.height;
+          var _w = _canvas.backgroundImage.width;
+          var _h = _canvas.backgroundImage.height;
 
-            var ImageObj1 = new Image();
-            ImageObj1.onload = function() {
-                var image1 = new fabric.Image(ImageObj1);
-                image1.src = options.image;
-                image1.set({
-                    top:0,
-                    left:0,
-                    width:_w,
-                    height:_h
-                });
-                image1.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(5 * window.devicePixelRatio)}));
-                image1.applyFilters(function(){
-                    _this.tempCanvas.setBackgroundImage(image1);
-                    _this.tempCanvas.renderAll();
-                });
-            };
-            ImageObj1.src = options.image;
-          }, {
-            scaleX   : 1.0,
-            scaleY   : 1.0
-          });
-
-        }
-      );
+          var ImageObj1 = new Image();
+          ImageObj1.onload = function() {
+            var image1 = new fabric.Image(ImageObj1);
+            image1.src = options.image;
+            image1.set({
+                top:0,
+                left:0,
+                width:_w,
+                height:_h
+            });
+            image1.filters.push(new fabric.Image.filters.Pixelate({blocksize:parseInt(5 * window.devicePixelRatio)}));
+            image1.applyFilters();
+            _this.tempCanvas.setBackgroundImage(image1.filters);
+            _this.tempCanvas.renderAll();
+          };
+          ImageObj1.src = options.image;
+        },
+        {
+          scaleX: 1.0,
+          scaleY: 1.0
+        });
+      });
     }
   },
   _onCanvasEvents: function(){
@@ -744,8 +742,8 @@ var BlurControl = createClass({
         format  : 'jpeg',
         left    : object_left,
         top     : object_top,
-        width   : that.activeControl._object.getWidth(),
-        height  : that.activeControl._object.getHeight(),
+        width   : that.activeControl._object.witdh,
+        height  : that.activeControl._object.height,
     });
     that.canvas.remove(that.activeControl._object);
     var ImageObj = new Image();
