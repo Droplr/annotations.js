@@ -1,5 +1,6 @@
 import Arrow from './lib/arrowController';
 import RectEmpty from './lib/rectEmptyController';
+import EllipseEmpty from './lib/ellipseEmptyController';
 
 var slice = Array.prototype.slice,
 emptyFunction = function() { },
@@ -191,8 +192,8 @@ initialize : function(options){
           if(that.activeControl instanceof RectEmpty){
             that.activeControl = new RectEmpty(that.activeControl.options);
           }
-          if(that.activeControl instanceof OvalControl){
-            that.activeControl = new OvalControl(that.activeControl._opts);
+          if(that.activeControl instanceof EllipseEmpty){
+            that.activeControl = new EllipseEmpty(that.activeControl.options);
           }
           if(that.activeControl instanceof PencilControl){
             that.activeControl = new PencilControl(that.activeControl._opts);
@@ -467,125 +468,6 @@ var LineControl = createClass({
         _this._moveLine(_this._line);
     });
     console.log(this._firstOne);
-  }
-});
-
-var OvalControl = createClass({
-  _object:null,
-  _mouseDownPosition:null,
-  _isMouseDown:false,
-  _opts:false,
-  initialize : function(options){
-    options || (options = {});
-
-    var scale = options.scale || window.devicePixelRatio;
-
-    this._opts = options;
-    this._object = new fabric.Ellipse({
-        top         :0,
-        left        :0,
-        isNew       :true,
-        width       :0,
-        height      :0,
-        strokeWidth :5 * scale,
-        stroke      :'red',
-        fill        :'transparent',
-        className   : this
-    });
-    this._object.setControlVisible('mtr', false);
-    this._object.setControlVisible('tr', false);
-    this._object.setControlVisible('br', false);
-    this._object.setControlVisible('bl', false);
-    this._object.setControlVisible('tl', false);
-    if(options.fillColor){
-      this._object.set({
-        fill   : options.fillColor
-      });
-    }
-    if(options.borderWidth){
-      this._object.set({
-        strokeWidth   : options.borderWidth * scale
-      });
-    }
-    if(options.borderColor){
-      this._object.set({
-        stroke   : options.borderColor
-      });
-    }
-    if(options.layer && options.layer._stopDrawing){
-      options.layer._stopDrawing();
-    }
-  },
-  set: function(p){
-    this._object.set(p);
-  },
-  setFillColor: function(color) {
-    this._opts.fillColor = color;
-  },
-  get: function(p){
-    return this._object.get(p);
-  },
-  getObject: function(){
-    return this._object;
-  },
-  delete: function(){
-  this._object.remove();
-  },
-  _onMouseDown: function(that,o){
-    if(!that.activeControl.get('isNew'))return;
-    this._isMouseDown=true;
-    this._mouseDownPosition = that.canvas.getPointer(o.e);
-    that.activeControl.set({
-      left    : this._mouseDownPosition.x,
-      top     : this._mouseDownPosition.y
-    });
-    that.canvas.add(that.activeControl.getObject());
-    that.canvas.renderAll();
-  },
-  _onMouseMove: function(that,o){
-    if(!this._isMouseDown)return;
-    var pointer = that.canvas.getPointer(o.e);
-    that.activeControl.set({
-      rx: Math.abs(this._mouseDownPosition.x - pointer.x)/2,
-      ry: Math.abs(this._mouseDownPosition.y - pointer.y)/2
-    });
-    if(this._mouseDownPosition.x > pointer.x){
-      that.activeControl.set({
-        left: Math.abs(pointer.x)
-      });
-    }
-    if(this._mouseDownPosition.y > pointer.y){
-      that.activeControl.set({
-        top: Math.abs(pointer.y)
-      });
-    }
-    that.canvas.renderAll();
-  },
-  _onMouseUp: function(that,o){
-    if(!this._isMouseDown)return;
-    this._isMouseDown=false;
-    that.activeControl.set({
-      isNew   : false
-    });
-    that.activeControl._object.setCoords();
-    that.canvas.setActiveObject(that.activeControl.getObject());
-    that.canvas.renderAll();
-  },
-  _onScaling: function(that,o){
-    console.log(that, o)
-    if(!o)return;
-    var _width  = o.target.width;
-    var _height = o.target.height;
-    var _w      = _width  * o.target.scaleX;
-    var _h      = _height * o.target.scaleY;
-    o.target.set({
-      width   : _width,
-      height  : _height,
-      rx      : _w/2,
-      ry      : _h/2,
-      scaleX  : 1,
-      scaleY  : 1
-    });
   }
 });
 
@@ -900,7 +782,7 @@ AnnotationLayer,
 ArrowControl: Arrow,
 LineControl,
 SquareControl: RectEmpty,
-OvalControl,
+OvalControl: EllipseEmpty,
 PencilControl,
 BlurControl,
 TextControl
