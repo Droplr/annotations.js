@@ -1,5 +1,8 @@
 import Arrow from './lib/arrowController';
 import RectEmpty from './lib/rectEmptyController';
+import EllipseEmpty from './lib/ellipseEmptyController';
+import Line from './lib/lineController';
+import Pencil from './lib/pencilController';
 
 var slice = Array.prototype.slice,
 emptyFunction = function() { },
@@ -185,31 +188,33 @@ initialize : function(options){
           if(that.activeControl instanceof Arrow){
             that.activeControl = new Arrow(that.activeControl.options);
           }
-          if(that.activeControl instanceof LineControl){
-            that.activeControl = new LineControl(that.activeControl._opts);
+          if(that.activeControl instanceof Line){
+            that.activeControl = new Line(that.activeControl.options);
           }
           if(that.activeControl instanceof RectEmpty){
             that.activeControl = new RectEmpty(that.activeControl.options);
           }
-          if(that.activeControl instanceof OvalControl){
-            that.activeControl = new OvalControl(that.activeControl._opts);
+          if(that.activeControl instanceof EllipseEmpty){
+            that.activeControl = new EllipseEmpty(that.activeControl.options);
           }
-          if(that.activeControl instanceof PencilControl){
-            that.activeControl = new PencilControl(that.activeControl._opts);
+          if(that.activeControl instanceof Pencil){
+            that.activeControl = new Pencil(that.activeControl.options);
           }
           if(that.activeControl instanceof TextControl){
             that.activeControl = new TextControl(that.activeControl._opts);
           }
-          that.activeControl._onMouseDown(that,o);
+
+          if (that.activeControl._onMouseDown) {
+            that.activeControl._onMouseDown(that, o);
+          }
         }
       });
 
-      this.canvas.on('mouse:move', function(o){
-        if(that.selectedObject && that.selectedObject._onMouseMove){
-          that.selectedObject._onMouseMove(that,o);
-        }
-        else if(that.activeControl){
-          that.activeControl._onMouseMove(that,o);
+      this.canvas.on('mouse:move', function(o) {
+        if (that.selectedObject && that.selectedObject._onMouseMove) {
+          that.selectedObject._onMouseMove(that, o);
+        } else if (that.activeControl && that.activeControl._onMouseMove) {
+          that.activeControl._onMouseMove(that, o);
         }
       });
 
@@ -320,24 +325,6 @@ initialize : function(options){
     this._calculateSize();
     return dataUrl;
   },
-  _startDrawing: function(options){
-    this.canvas.isDrawingMode = true;
-    if(options.fillColor){
-      this.canvas.freeDrawingBrush.color = options.fillColor;
-    }
-    if(options.size){
-      this.canvas.freeDrawingBrush.width = options.size || 5;
-    }
-    if(options.shadowWidth){
-      this.canvas.freeDrawingBrush.shadow = {blur : options.shadowWidth};
-    }
-    if(options.shadowColor){
-      this.canvas.freeDrawingBrush.shadow = {color : options.shadowColor};
-    }
-  },
-  _stopDrawing: function(){
-    this.canvas.isDrawingMode = false;
-  },
   _calculateSize: function() {
     var _w = this.canvas.backgroundImage.width;
     var _h = this.canvas.backgroundImage.height;
@@ -351,291 +338,6 @@ initialize : function(options){
       el.style.width = _w / (this.options.imagePixelRatio || window.devicePixelRatio) + 'px';
       el.style.height = _h / (this.options.imagePixelRatio || window.devicePixelRatio) + 'px';
     }.bind(this))
-  }
-});
-
-var LineControl = createClass({
-  _object:null,
-  _mouseDownPosition:null,
-  _isMouseDown:false,
-  _firstOne:true,
-  _line:true,
-  _opts : false,
-  initialize : function(options){
-    options || (options = {});
-
-    var scale = options.scale || window.devicePixelRatio;
-    console.log("Scale %s", scale)
-
-    this._opts = options;
-    this._line = new fabric.Line([0,0,0,0], {
-        stroke: options.fillColor || '#000',
-        selectable: true,
-        strokeWidth: 5 * scale,
-        hasBorders: false,
-        hasControls: false,
-        originX: 'center',
-        originY: 'center',
-        lockScalingX: true,
-        lockScalingY: true,
-        inNew   : true,
-        className   : this,
-        strokeLineCap: "round"
-    });
-  },
-  setFillColor: function(color) {
-    this._opts.fillColor = color;
-  },
-  set: function(p){
-    this._object.set(p);
-  },
-  get: function(p){
-    return this._object.get(p);
-  },
-  getObject: function(){
-    return this._object;
-  },
-  delete: function(obj){
-    this._line.remove();
-  },
-  _moveEnd: function(obj) {
-    var p = obj,x1, y1, x2, y2;
-
-    if (obj.pointType === 'arrow_end') {
-      obj.line.set('x1', obj.get('left'));
-      obj.line.set('y1', obj.get('top'));
-    } else {
-      obj.line.set('x2', obj.get('left'));
-      obj.line.set('y2', obj.get('top'));
-    }
-    obj.line._setWidthHeight();
-
-    x1 = obj.line.get('x1');
-    y1 = obj.line.get('y1');
-    x2 = obj.line.get('x2');
-    y2 = obj.line.get('y2');
-
-    obj.line.setCoords();
-  },
-  _moveLine: function(obj){
-    var oldCenterX = (obj.x1 + obj.x2) / 2,
-        oldCenterY = (obj.y1 + obj.y2) / 2,
-        deltaX = obj.left - oldCenterX,
-        deltaY = obj.top - oldCenterY;
-
-        obj.set({
-      'x1': obj.x1 + deltaX,
-      'y1': obj.y1 + deltaY,
-      'x2': obj.x2 + deltaX,
-      'y2': obj.y2 + deltaY
-    });
-
-    obj.set({
-      'left': (obj.x1 + obj.x2) / 2,
-      'top': (obj.y1 + obj.y2) / 2
-    });
-  },
-  _onMouseDown: function(that,o){
-    if(!this._line.inNew) return;
-    this._isMouseDown=true;
-    this._mouseDownPosition = that.canvas.getPointer(o.e);
-    this._line.set({
-        'x1'  : Math.abs(this._mouseDownPosition.x),
-        'y1'  : Math.abs(this._mouseDownPosition.y),
-        'x2'  : Math.abs(this._mouseDownPosition.x),
-        'y2'  : Math.abs(this._mouseDownPosition.y)
-    }).setCoords();
-
-    that.canvas.add(this._line);
-    this._line.inNew=false;
-  },
-  _onMouseMove: function(that,o){
-    if(!this._isMouseDown)return;
-    var pointer = that.canvas.getPointer(o.e);
-    this._line.set({
-        'x2'  : Math.abs(pointer.x),
-        'y2'  : Math.abs(pointer.y)
-    }).setCoords();
-
-    that.canvas.renderAll();
-  },
-  _onMouseUp: function(that,o){
-    if(!this._isMouseDown)return;
-    this._firstOne=this._isMouseDown=false;
-    var _this = this;
-    this._line.on('moving', function () {
-        _this._moveLine(_this._line);
-    });
-    console.log(this._firstOne);
-  }
-});
-
-var OvalControl = createClass({
-  _object:null,
-  _mouseDownPosition:null,
-  _isMouseDown:false,
-  _opts:false,
-  initialize : function(options){
-    options || (options = {});
-
-    var scale = options.scale || window.devicePixelRatio;
-
-    this._opts = options;
-    this._object = new fabric.Ellipse({
-        top         :0,
-        left        :0,
-        isNew       :true,
-        width       :0,
-        height      :0,
-        strokeWidth :5 * scale,
-        stroke      :'red',
-        fill        :'transparent',
-        className   : this
-    });
-    this._object.setControlVisible('mtr', false);
-    this._object.setControlVisible('tr', false);
-    this._object.setControlVisible('br', false);
-    this._object.setControlVisible('bl', false);
-    this._object.setControlVisible('tl', false);
-    if(options.fillColor){
-      this._object.set({
-        fill   : options.fillColor
-      });
-    }
-    if(options.borderWidth){
-      this._object.set({
-        strokeWidth   : options.borderWidth * scale
-      });
-    }
-    if(options.borderColor){
-      this._object.set({
-        stroke   : options.borderColor
-      });
-    }
-    if(options.layer && options.layer._stopDrawing){
-      options.layer._stopDrawing();
-    }
-  },
-  set: function(p){
-    this._object.set(p);
-  },
-  setFillColor: function(color) {
-    this._opts.fillColor = color;
-  },
-  get: function(p){
-    return this._object.get(p);
-  },
-  getObject: function(){
-    return this._object;
-  },
-  delete: function(){
-  this._object.remove();
-  },
-  _onMouseDown: function(that,o){
-    if(!that.activeControl.get('isNew'))return;
-    this._isMouseDown=true;
-    this._mouseDownPosition = that.canvas.getPointer(o.e);
-    that.activeControl.set({
-      left    : this._mouseDownPosition.x,
-      top     : this._mouseDownPosition.y
-    });
-    that.canvas.add(that.activeControl.getObject());
-    that.canvas.renderAll();
-  },
-  _onMouseMove: function(that,o){
-    if(!this._isMouseDown)return;
-    var pointer = that.canvas.getPointer(o.e);
-    that.activeControl.set({
-      rx: Math.abs(this._mouseDownPosition.x - pointer.x)/2,
-      ry: Math.abs(this._mouseDownPosition.y - pointer.y)/2
-    });
-    if(this._mouseDownPosition.x > pointer.x){
-      that.activeControl.set({
-        left: Math.abs(pointer.x)
-      });
-    }
-    if(this._mouseDownPosition.y > pointer.y){
-      that.activeControl.set({
-        top: Math.abs(pointer.y)
-      });
-    }
-    that.canvas.renderAll();
-  },
-  _onMouseUp: function(that,o){
-    if(!this._isMouseDown)return;
-    this._isMouseDown=false;
-    that.activeControl.set({
-      isNew   : false
-    });
-    that.activeControl._object.setCoords();
-    that.canvas.setActiveObject(that.activeControl.getObject());
-    that.canvas.renderAll();
-  },
-  _onScaling: function(that,o){
-    console.log(that, o)
-    if(!o)return;
-    var _width  = o.target.width;
-    var _height = o.target.height;
-    var _w      = _width  * o.target.scaleX;
-    var _h      = _height * o.target.scaleY;
-    o.target.set({
-      width   : _width,
-      height  : _height,
-      rx      : _w/2,
-      ry      : _h/2,
-      scaleX  : 1,
-      scaleY  : 1
-    });
-  }
-});
-
-var PencilControl = createClass({
-  _object:null,
-  _mouseDownPosition:null,
-  _isMouseDown:false,
-  _option:null,
-  _opts:false,
-  initialize : function(options){
-    options || (options = {});
-
-    this._opts = options;
-    if(options.layer && options.layer._startDrawing){
-      options.layer._startDrawing(options);
-    }
-  },
-  set: function(p){
-    this._object.set(p);
-  },
-  setFillColor: function(color) {
-    this._opts.fillColor = color;
-  },
-  get: function(p){
-    return this._object.get(p);
-  },
-  getObject: function(){
-    return this._object;
-  },
-  delete: function(){
-    this._object.remove();
-  },
-  _onMouseDown: function(that,o){
-    that.canvas.isDrawingMode = true;
-  },
-  _onMouseMove: function(that,o){
-
-  },
-  _onMouseUp: function(that,o){
-    var size    = that.canvas.size();
-    var obj     = that.canvas.item(size-1);
-    obj.setControlVisible('mtr', false);
-    obj.setControlVisible('mt', false);
-    obj.setControlVisible('ml', false);
-    obj.setControlVisible('mr', false);
-    obj.setControlVisible('mb', false);
-    obj.setControlVisible('bl', false);
-    obj.setControlVisible('br', false);
-    obj.setControlVisible('tl', false);
-    obj.setControlVisible('tr', false);
   }
 });
 
@@ -664,9 +366,9 @@ var BlurControl = createClass({
     this._object.setControlVisible('ml', false);
     this._object.setControlVisible('mr', false);
     this._object.setControlVisible('mb', false);
-    if(options.layer && options.layer._stopDrawing){
-        options.layer._stopDrawing();
-    }
+
+    options.layer.canvas.isDrawingMode = false;
+
     if(options.fillColor){
         this._object.set({
             fill   : options.fillColor
@@ -820,9 +522,9 @@ var TextControl = createClass({
       this._object.setControlVisible('tr', false);
       this._object.setControlVisible('br', false);
       this._object.setControlVisible('bl', false);
-      if(options.layer && options.layer._stopDrawing){
-        options.layer._stopDrawing();
-      }
+
+      options.layer.canvas.isDrawingMode = false;
+
       if(options.fillColor){
         this._object.set({
           fill   : options.fillColor
@@ -898,10 +600,10 @@ var TextControl = createClass({
 module.exports = {
 AnnotationLayer,
 ArrowControl: Arrow,
-LineControl,
+LineControl: Line,
 SquareControl: RectEmpty,
-OvalControl,
-PencilControl,
+OvalControl: EllipseEmpty,
+PencilControl: Pencil,
 BlurControl,
 TextControl
 }
