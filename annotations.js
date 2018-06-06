@@ -3,6 +3,7 @@ import RectEmpty from './lib/rectEmptyController';
 import EllipseEmpty from './lib/ellipseEmptyController';
 import Line from './lib/lineController';
 import Pencil from './lib/pencilController';
+import Blur from './lib/blurController';
 
 var slice = Array.prototype.slice,
 emptyFunction = function() { },
@@ -341,160 +342,6 @@ initialize : function(options){
   }
 });
 
-var BlurControl = createClass({
-  _object:null,
-  _mouseDownPosition:null,
-  _isMouseDown:false,
-  _tempCanvas:null,
-  initialize : function(options){
-    options || (options = {});
-
-    var scale = options.scale || window.devicePixelRatio;
-
-    this._object = new fabric.Rect({
-        top         :0,
-        left        :0,
-        isNew       :true,
-        width       :0,
-        height      :0,
-        strokeWidth :5,
-        stroke      :'red',
-        fill        :'transparent'
-    });
-    this._object.setControlVisible('mtr', false);
-    this._object.setControlVisible('mt', false);
-    this._object.setControlVisible('ml', false);
-    this._object.setControlVisible('mr', false);
-    this._object.setControlVisible('mb', false);
-
-    options.layer.canvas.isDrawingMode = false;
-
-    if(options.fillColor){
-        this._object.set({
-            fill   : options.fillColor
-        });
-    }
-    if(options.borderWidth){
-        this._object.set({
-            strokeWidth   : options.borderWidth * scale
-        });
-    }
-    if(options.borderColor){
-        this._object.set({
-            stroke   : options.borderColor
-        });
-    }
-  },
-  set: function(p){
-    this._object.set(p);
-  },
-  setFillColor: function(color) {
-    this._opts.fillColor = color;
-  },
-  get: function(p){
-    return this._object.get(p);
-  },
-  getObject: function(){
-    return this._object;
-  },
-  _onMouseDown: function(that,o){
-    if(!that.activeControl.get('isNew'))return;
-    this._isMouseDown=true;
-    this._mouseDownPosition = that.canvas.getPointer(o.e);
-    that.activeControl.set({
-        left    : this._mouseDownPosition.x,
-        top     : this._mouseDownPosition.y
-    });
-    that.canvas.add(that.activeControl.getObject());
-    that.canvas.renderAll();
-  },
-  _onMouseMove: function(that,o){
-    if(!this._isMouseDown)return;
-    var pointer = that.canvas.getPointer(o.e);
-    that.activeControl.set({
-      width   : Math.abs(pointer.x - this._mouseDownPosition.x),
-      height  : Math.abs(pointer.y - this._mouseDownPosition.y)
-    });
-    if(this._mouseDownPosition.x > pointer.x){
-      that.activeControl.set({
-        left: Math.abs(pointer.x)
-      });
-    }
-    if(this._mouseDownPosition.y > pointer.y){
-      that.activeControl.set({
-        top: Math.abs(pointer.y)
-      });
-    }
-    that.canvas.renderAll();
-  },
-  _onMouseUp: function(that,o){
-    if(!this._isMouseDown)return;
-    this._isMouseDown=false;
-    var _mouse = that.canvas.getPointer(o.e),
-        _this = this,
-        object_left = that.activeControl._object.left || _this._mouseDownPosition.x,
-        object_top = that.activeControl._object.top || _this._mouseDownPosition.y;
-    that.activeControl.set({
-      isNew   : false
-    });
-    that.activeControl._object.setCoords();
-    that.canvas.setActiveObject(that.activeControl.getObject());
-
-    var base64 = that.tempCanvas.toDataURL({
-        format  : 'jpeg',
-        left    : object_left,
-        top     : object_top,
-        width   : that.activeControl._object.witdh,
-        height  : that.activeControl._object.height,
-    });
-    that.canvas.remove(that.activeControl._object);
-    var ImageObj = new Image();
-    ImageObj.loaded = true;
-    ImageObj.onload = function() {
-      if(ImageObj.loaded){
-        var img = new fabric.Image(ImageObj);
-        img.original_object = ImageObj;
-        ImageObj.loaded = false;
-        _this._object = img.set({left: object_left, top: object_top,className   : _this});
-        _this._object.setControlVisible('mtr', false);
-        _this._object.setControlVisible('mt', false);
-        _this._object.setControlVisible('ml', false);
-        _this._object.setControlVisible('mr', false);
-        _this._object.setControlVisible('mb', false);
-        that.canvas.add(_this._object).renderAll();
-        that.canvas.setActiveObject(_this._object).sendToBack(_this._object).renderAll();
-      }
-    }
-    ImageObj.src = base64;
-  },
-  _onScaling: function(that,o){
-    if(!o)return;
-    var _mouse = that.canvas.getPointer(o.e),
-        _this = this;
-    var base64 = that.tempCanvas.toDataURL({
-        format  : 'jpeg',
-        left    : o.target.left+2,
-        top     : o.target.top+2,
-        width   : o.target.getWidth(),
-        height  : o.target.getHeight()
-    });
-    that.activeControl._object.original_object.src = base64;
-  },
-  _onMoving: function(that,o){
-    if(!o)return;
-    var _mouse = that.canvas.getPointer(o.e),
-        _this = this, _temp;
-    var base64 = that.tempCanvas.toDataURL({
-        format  : 'jpeg',
-        left    : o.target.left+2,
-        top     : o.target.top+2,
-        width   : o.target.getWidth(),
-        height  : o.target.getHeight()
-    });
-    that.canvas.getActiveObject().original_object.src = base64;
-  }
-});
-
 var TextControl = createClass({
   _object:null,
   _mouseDownPosition:null,
@@ -604,6 +451,6 @@ LineControl: Line,
 SquareControl: RectEmpty,
 OvalControl: EllipseEmpty,
 PencilControl: Pencil,
-BlurControl,
+BlurControl: Blur,
 TextControl
 }
