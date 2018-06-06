@@ -294,16 +294,18 @@ initialize : function(options){
     }
   },
   delete: function(){
-    if(this.selectedObject) {
-      if (this.selectedObject.delete) {
-        this.selectedObject.delete();
+    const activeObject = this.canvas.getActiveObject();
+
+    if (activeObject) {
+      if (activeObject.delete) {
+        activeObject.delete();
       } else {
-        var object = this.canvas.getActiveObject();
-        object.remove();
+        this.canvas.remove(activeObject);
       }
-    } else {
-      this.activeControl.delete();
+    } else if (this.selectedObject && this.selectedObject.delete) {
+      this.selectedObject.delete();
     }
+
     this.canvas.renderAll();
   },
   getCanvas: function(){
