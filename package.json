@@ -1,6 +1,6 @@
 {
   "name": "annotations.js",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "A simple wrapper around fabric.js to make annotations on an image",
   "main": "annotations.js",
   "scripts": {
@@ -15,6 +15,9 @@
     "annotations"
   ],
   "author": "levi@droplr.com",
+  "contributors": [
+    "Rafal Swietek <raf.swietek@gmail.com> (https://github.com/rafalswietek)",
+  ],
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Droplr/annotations.js/issues"
