@@ -4,6 +4,7 @@ import RectEmpty from './lib/rectEmptyController';
 import EllipseEmpty from './lib/ellipseEmptyController';
 import Line from './lib/lineController';
 import Pencil from './lib/pencilController';
+import Highlight from './lib/highlightController';
 import Blur from './lib/blurController';
 import Text from './lib/textController';
 
@@ -21,6 +22,7 @@ module.exports = {
   SquareControl: RectEmpty,
   OvalControl: EllipseEmpty,
   PencilControl: Pencil,
+  HighlightControl: Highlight,
   BlurControl: Blur,
   TextControl: Text,
 };
