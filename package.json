@@ -1,6 +1,6 @@
 {
   "name": "annotations.js",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "A simple wrapper around fabric.js to make annotations on an image",
   "main": "annotations.js",
   "scripts": {
