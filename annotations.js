@@ -8,6 +8,7 @@ import Highlight from './lib/highlightController';
 import Blur from './lib/blurController';
 import Text from './lib/textController';
 import Emoji from './lib/emojiController';
+import emojis from './lib/emojis';
 
 // Reverse order of stroke and filling, to allow for more pleasing stroke.
 fabric.Text.prototype._renderText = function(ctx) {
@@ -27,4 +28,5 @@ module.exports = {
   BlurControl: Blur,
   TextControl: Text,
   EmojiControl: Emoji,
+  emojis,
 };
