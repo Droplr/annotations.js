@@ -16,6 +16,10 @@ fabric.Text.prototype._renderText = function(ctx) {
   this._renderTextStroke(ctx);
   this._renderTextFill(ctx);
 };
+// Set default transform corners size and remove their transparency.
+fabric.Object.prototype.transparentCorners = false;
+fabric.Object.prototype.cornerSize = 20;
+
 
 module.exports = {
   AnnotationLayer,
