@@ -1,6 +1,7 @@
 import AnnotationLayer from './lib/annotationLayer';
 import Arrow from './lib/arrowController';
 import RectEmpty from './lib/rectEmptyController';
+import RectFilled from './lib/rectFilledController';
 import EllipseEmpty from './lib/ellipseEmptyController';
 import Line from './lib/lineController';
 import Pencil from './lib/pencilController';
@@ -26,6 +27,7 @@ module.exports = {
   ArrowControl: Arrow,
   LineControl: Line,
   SquareControl: RectEmpty,
+  SquareFilledControl: RectFilled,
   OvalControl: EllipseEmpty,
   PencilControl: Pencil,
   HighlightControl: Highlight,
