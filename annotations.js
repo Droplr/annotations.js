@@ -3,6 +3,7 @@ import Arrow from './lib/arrowController';
 import RectEmpty from './lib/rectEmptyController';
 import RectFilled from './lib/rectFilledController';
 import EllipseEmpty from './lib/ellipseEmptyController';
+import EllipseFilled from './lib/ellipseFilledController';
 import Line from './lib/lineController';
 import Pencil from './lib/pencilController';
 import Highlight from './lib/highlightController';
@@ -29,6 +30,7 @@ module.exports = {
   SquareControl: RectEmpty,
   SquareFilledControl: RectFilled,
   OvalControl: EllipseEmpty,
+  OvalFilledControl: EllipseFilled,
   PencilControl: Pencil,
   HighlightControl: Highlight,
   BlurControl: Blur,
