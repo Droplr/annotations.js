@@ -23,7 +23,7 @@ fabric.Object.prototype.transparentCorners = false;
 fabric.Object.prototype.cornerSize = 20;
 
 
-module.exports = {
+export default {
   AnnotationLayer,
   ArrowControl: Arrow,
   LineControl: Line,
