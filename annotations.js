@@ -22,7 +22,8 @@ fabric.Text.prototype._renderText = function(ctx) {
 fabric.Object.prototype.transparentCorners = false;
 fabric.Object.prototype.cornerSize = 20;
 
-export default {
+
+module.exports = {
   AnnotationLayer,
   ArrowControl: Arrow,
   LineControl: Line,
