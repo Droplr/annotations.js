@@ -24,6 +24,6 @@
   },
   "homepage": "https://github.com/Droplr/annotations.js#readme",
   "dependencies": {
-    "fabric": "2.3.1"
+    "fabric": "5.2.4"
   }
 }
